@@ -43,10 +43,10 @@
 
     /* ── TOP NAV ── */
     .topbar {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
+      padding: 10px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
@@ -57,6 +57,17 @@
       letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
     }
     .topbar .logo span { color: var(--text); }
+    .topbar-center {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .topbar-right {
+      display: flex;
+      justify-content: flex-end;
+    }
     .icon-btn {
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 10px; width: 40px; height: 40px;
@@ -235,12 +246,14 @@
 
 <!-- TOP BAR -->
 <header class="topbar">
-  <div>
+  <div class="topbar-left">
     <div class="logo" id="logoText">Price<span>Check</span></div>
-    <div id="lastUpdated" style="font-size:0.72rem;color:var(--accent);margin-top:2px;font-weight:500;"></div>
   </div>
-  <div id="dbStatusBadge" class="status-badge err">
-    <div class="dot"></div><span>No Data</span>
+  <div class="topbar-center" id="lastUpdated"></div>
+  <div class="topbar-right">
+    <div id="dbStatusBadge" class="status-badge err">
+      <div class="dot"></div><span>No Data</span>
+    </div>
   </div>
 </header>
 
@@ -260,6 +273,7 @@
     <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
     <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
     <button class="btn btn-ghost"   id="btnFlip"  onclick="flipCamera()" style="display:none">🔄 Flip</button>
+    <button class="btn btn-ghost"   id="btnFlash" onclick="toggleFlash()"  style="display:none">🔦 Flash</button>
   </div>
   <div class="search-row">
     <input class="search-input" id="manualBarcode" type="text" inputmode="numeric"
@@ -315,6 +329,7 @@ let html5Qr  = null;
 let cameras  = [];
 let camIdx   = 0;
 let scanning = false;
+let flashOn  = false;
 
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -455,10 +470,12 @@ async function startScan() {
     );
 
     scanning = true;
+    flashOn = false;
     setScanStatus('Scanning — point at barcode', 'active-scan');
     document.getElementById('btnStart').style.display = 'none';
     document.getElementById('btnStop').style.display  = '';
     if (cameras.length > 1) document.getElementById('btnFlip').style.display = '';
+    if (hasTorch()) document.getElementById('btnFlash').style.display = '';
 
   } catch(e) {
     setScanStatus('Camera error: '+e.message, 'scan-error');
@@ -472,10 +489,37 @@ async function stopScan() {
     html5Qr = null;
   }
   scanning = false;
+  flashOn = false;
   setScanStatus('Camera stopped');
   document.getElementById('btnStart').style.display = '';
   document.getElementById('btnStop').style.display  = 'none';
   document.getElementById('btnFlip').style.display  = 'none';
+  document.getElementById('btnFlash').style.display = 'none';
+}
+
+function hasTorch() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return false;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return false;
+    const caps = track.getCapabilities();
+    return !!(caps && caps.torch);
+  } catch(e) { return false; }
+}
+
+async function toggleFlash() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return;
+    flashOn = !flashOn;
+    await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+    toast(flashOn ? '🔦 Flash on' : '🔦 Flash off');
+  } catch(e) {
+    toast('❌ Flash not supported on this device');
+  }
 }
 
 async function flipCamera() {
