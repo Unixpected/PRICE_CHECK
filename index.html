@@ -391,38 +391,79 @@ async function fetchGitHubFileTimestamp() {
 
 async function loadCSV(showFeedback=false) {
   updateDbBadge(null);
-  try {
-    const url = buildCsvUrl(getSettings()) + '?nc='+Date.now();
+
+  async function tryFetch(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP '+res.status);
-
-    // Grab timestamp from Last-Modified header (GitHub raw CDN sets this to commit time)
     const headerTs = res.headers.get('last-modified');
     const rawTs = headerTs ? new Date(headerTs).getTime() : null;
-
     const text = await res.text();
+    return { text, rawTs };
+  }
+
+  let text = null;
+  let rawTs = null;
+  let source = '';
+
+  // 1) Try configured GitHub / remote URL
+  try {
+    const remote = buildCsvUrl(getSettings()) + '?nc='+Date.now();
+    const result = await tryFetch(remote);
+    text = result.text;
+    rawTs = result.rawTs;
+    source = 'remote';
+  } catch(e) {
+    console.warn('Remote CSV failed:', e.message);
+  }
+
+  // 2) Fallback to local products.csv
+  if (!text) {
+    try {
+      const result = await tryFetch('./products.csv');
+      text = result.text;
+      rawTs = result.rawTs;
+      source = 'local';
+    } catch(e) {
+      console.warn('Local CSV failed:', e.message);
+    }
+  }
+
+  // 3) If we got data, parse and store
+  if (text) {
     products = parseCSV(text);
     localStorage.setItem('pcCsvCache', text);
 
-    // Prefer GitHub API commit date, fallback to Last-Modified header, fallback to now
-    const ghTs = await fetchGitHubFileTimestamp();
+    // Try GitHub API for exact commit timestamp; don't block on failure
+    let ghTs = null;
+    try { ghTs = await fetchGitHubFileTimestamp(); } catch(_) {}
+
     const finalTs = ghTs || rawTs || Date.now();
     localStorage.setItem('pcCsvTimestamp', finalTs);
 
     updateDbBadge(true, products.length);
     updateLastUpdated(finalTs);
-    if (showFeedback) toast('✅ Loaded '+products.length+' products');
-  } catch(e) {
-    const cachedTs = localStorage.getItem('pcCsvTimestamp');
-    if (products.length === 0) {
-      updateDbBadge(false, 0);
-      updateLastUpdated(cachedTs);
-      if (showFeedback) toast('❌ Could not load CSV: '+e.message);
-    } else {
+    if (showFeedback) toast('✅ Loaded '+products.length+' products'+(source==='local'?' (local)':''));
+    return;
+  }
+
+  // 4) Nothing worked — use cache if we have it
+  const cachedTs = localStorage.getItem('pcCsvTimestamp');
+  if (products.length === 0) {
+    const cached = localStorage.getItem('pcCsvCache');
+    if (cached) {
+      products = parseCSV(cached);
       updateDbBadge(true, products.length);
       updateLastUpdated(cachedTs);
       if (showFeedback) toast('⚠️ Using offline data');
+    } else {
+      updateDbBadge(false, 0);
+      updateLastUpdated(null);
+      if (showFeedback) toast('❌ Could not load CSV');
     }
+  } else {
+    updateDbBadge(true, products.length);
+    updateLastUpdated(cachedTs);
+    if (showFeedback) toast('⚠️ Using offline data');
   }
 }
 
