@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Settings — PriceCheck</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #273549;
+      --border: #334155;
+      --accent: #38bdf8;
+      --success: #4ade80;
+      --danger: #f87171;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --price: #fbbf24;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── TOP NAV ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      gap: 10px;
+    }
+    .topbar .logo {
+      font-size: 1.1rem; font-weight: 800;
+      letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
+    }
+    .icon-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text); font-size: 1.2rem;
+      text-decoration: none;
+      transition: background 0.15s; flex-shrink: 0;
+    }
+    .icon-btn:active { background: var(--border); }
+
+    /* ── LOCK SCREEN ── */
+    #settingsLock {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; padding:40px 32px; gap:18px; flex:1;
+    }
+    .lock-icon  { font-size:3rem; }
+    .lock-title { font-size:1.2rem; font-weight:800; }
+    .lock-sub   { font-size:0.85rem; color:var(--muted); text-align:center; line-height:1.6; }
+    #lockPinWrap { display:flex; gap:10px; align-items:center; }
+    #lockPin {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text); font-size:1.3rem;
+      padding:12px 16px; outline:none; width:150px; text-align:center;
+      letter-spacing:6px; -webkit-appearance:none;
+    }
+    #lockPin:focus { border-color:var(--accent); }
+    #lockError { color:var(--danger); font-size:0.82rem; min-height:18px; }
+
+    #settingsContent { display:none; flex-direction:column; }
+
+    .settings-group {
+      margin:10px 18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+    }
+    .settings-header {
+      padding:9px 16px; font-size:0.7rem; text-transform:uppercase;
+      letter-spacing:0.1em; color:var(--muted); background:var(--bg);
+    }
+    .settings-row {
+      display:flex; flex-direction:column; gap:5px;
+      padding:13px 16px; border-top:1px solid var(--border);
+    }
+    .settings-row:first-of-type { border-top:none; }
+    .settings-row label { font-size:0.82rem; color:var(--muted); font-weight:600; }
+    .settings-row input, .settings-row select {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:0.95rem;
+      padding:10px 12px; outline:none; width:100%; -webkit-appearance:none;
+    }
+    .settings-row input:focus, .settings-row select:focus { border-color:var(--accent); }
+    .settings-note { padding:8px 16px 12px; font-size:0.78rem; color:var(--muted); line-height:1.6; }
+    .save-btn-wrap { padding:4px 18px 10px; }
+
+    .btn {
+      border:none; border-radius:var(--radius-sm);
+      padding:10px 20px; font-size:0.9rem; font-weight:700;
+      cursor:pointer; transition:opacity 0.15s, transform 0.1s;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn:active { transform:scale(0.96); opacity:0.8; }
+    .btn-primary { background:var(--accent); color:#0f172a; }
+    .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-full    { width:100%; justify-content:center; }
+    .btn-warn    { background:#92400e; color:#fef3c7; border:1px solid #b45309; }
+
+    /* ── MODAL ── */
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      display:none; align-items:center; justify-content:center;
+      z-index:500; padding:20px;
+    }
+    .modal-backdrop.open { display:flex; }
+    .modal {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:24px; width:100%; max-width:380px;
+      display:flex; flex-direction:column; gap:14px;
+    }
+    .modal h3 { font-size:1.1rem; font-weight:800; }
+    .modal input {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:1rem;
+      padding:11px 14px; outline:none; width:100%; -webkit-appearance:none;
+      letter-spacing:3px;
+    }
+    .modal input:focus { border-color:var(--accent); }
+    .modal-btns { display:flex; gap:10px; }
+    .modal-error { color:var(--danger); font-size:0.82rem; min-height:16px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+      background:var(--surface2); border:1px solid var(--border); color:var(--text);
+      padding:10px 20px; border-radius:30px; font-size:0.85rem; font-weight:600;
+      opacity:0; transition:opacity 0.3s; pointer-events:none;
+      white-space:nowrap; z-index:999;
+    }
+    #toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a class="icon-btn" href="index.html" title="Back">←</a>
+  <div class="logo">Settings</div>
+  <div style="width:40px;"></div>
+</header>
+
+<!-- LOCK SCREEN -->
+<div id="settingsLock">
+  <div class="lock-icon">🔒</div>
+  <div class="lock-title">Settings Locked</div>
+  <div class="lock-sub">Enter your PIN to access settings.<br>Default PIN: <strong>1234</strong></div>
+  <div id="lockPinWrap">
+    <input id="lockPin" type="password" inputmode="numeric" maxlength="8"
+           placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" />
+    <button class="btn btn-primary" onclick="unlockSettings()">Unlock</button>
+  </div>
+  <div id="lockError"></div>
+</div>
+
+<!-- SETTINGS CONTENT -->
+<div id="settingsContent">
+  <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:1.1rem;font-weight:800;">Settings</div>
+    <button class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem;" onclick="lockSettings()">🔒 Lock</button>
+  </div>
+
+  <!-- DATA SOURCE -->
+  <div class="settings-group">
+    <div class="settings-header">📦 Data Source (GitHub CSV)</div>
+    <div class="settings-row">
+      <label>GitHub Username</label>
+      <input id="cfgUser" type="text" placeholder="e.g. yourusername" autocomplete="off" />
+    </div>
+    <div class="settings-row">
+      <label>Repository Name</label>
+      <input id="cfgRepo" type="text" placeholder="e.g. price-checker" autocomplete="off" />
+    </div>
+    <div class="settings-row">
+      <label>Branch</label>
+      <input id="cfgBranch" type="text" placeholder="main" autocomplete="off" />
+    </div>
+    <div class="settings-row">
+      <label>CSV File Path</label>
+      <input id="cfgPath" type="text" placeholder="data/products.csv" autocomplete="off" />
+    </div>
+    <div class="settings-note">
+      CSV URL preview:<br>
+      <code style="color:var(--accent);font-size:0.77rem;word-break:break-all;" id="previewUrl">—</code>
+    </div>
+  </div>
+  <div class="save-btn-wrap">
+    <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Save &amp; Reload Data</button>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="settings-group">
+    <div class="settings-header">📷 Camera</div>
+    <div class="settings-row">
+      <label>Preferred Camera</label>
+      <select id="camSelect" onchange="saveCamPref()">
+        <option value="environment">Back Camera (default)</option>
+        <option value="user">Front Camera</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- DISPLAY -->
+  <div class="settings-group">
+    <div class="settings-header">💱 Display</div>
+    <div class="settings-row">
+      <label>Currency Symbol</label>
+      <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
+    </div>
+    <div class="settings-row">
+      <label>Store Name</label>
+      <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
+    </div>
+  </div>
+  <div class="save-btn-wrap" style="padding-top:0">
+    <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="settings-group">
+    <div class="settings-header">🔐 Security</div>
+    <div class="settings-note" style="padding-top:12px;">
+      Change the PIN required to open Settings.<br>
+      Default is <strong>1234</strong> — update it after first setup.
+    </div>
+    <div style="padding:0 16px 14px;">
+      <button class="btn btn-warn btn-full" onclick="openChangePinModal()">🔑 Change PIN</button>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="settings-group">
+    <div class="settings-header">ℹ️ GitHub Folder Structure</div>
+    <div class="settings-note" style="padding-top:10px;">
+      📁 your-repo/<br>
+      &nbsp;&nbsp;📄 index.html<br>
+      &nbsp;&nbsp;📄 manifest.json<br>
+      &nbsp;&nbsp;📁 data/<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
+      Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
+    </div>
+  </div>
+  <div style="height:10px;"></div>
+</div><!-- /settingsContent -->
+
+<!-- ══ CHANGE PIN MODAL ═══════════════════════════════════════ -->
+<div id="pinModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>🔑 Change PIN</h3>
+    <input id="pinCurrent" type="password" inputmode="numeric" placeholder="Current PIN" maxlength="8" />
+    <input id="pinNew"     type="password" inputmode="numeric" placeholder="New PIN (4–8 digits)" maxlength="8" />
+    <input id="pinConfirm" type="password" inputmode="numeric" placeholder="Confirm New PIN" maxlength="8" />
+    <div class="modal-error" id="pinModalError"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-full" onclick="closePinModal()">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="savePin()">Save PIN</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── STORAGE ─────────────────────────────────────────────────
+const DEFAULT = {
+  user:'', repo:'price-checker', branch:'main', path:'data/products.csv',
+  currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
+};
+function getSettings() {
+  try { return { ...DEFAULT, ...JSON.parse(localStorage.getItem('pcSettings')||'{}') }; }
+  catch { return { ...DEFAULT }; }
+}
+function setSettings(obj) {
+  localStorage.setItem('pcSettings', JSON.stringify({ ...getSettings(), ...obj }));
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settingsLock').style.display    = 'flex';
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('lockPin').value = '';
+  document.getElementById('lockError').textContent = '';
+});
+
+// ─── LOCK ────────────────────────────────────────────────────
+function unlockSettings() {
+  const entered = document.getElementById('lockPin').value.trim();
+  const correct = getSettings().pin || '1234';
+  if (entered === correct) {
+    document.getElementById('settingsLock').style.display    = 'none';
+    document.getElementById('settingsContent').style.display = 'flex';
+    loadSettingsUI();
+  } else {
+    document.getElementById('lockError').textContent = '❌ Wrong PIN. Try again.';
+    document.getElementById('lockPin').value = '';
+    const el = document.getElementById('lockPin');
+    el.style.borderColor = 'var(--danger)';
+    setTimeout(()=>{ el.style.borderColor=''; }, 1000);
+  }
+}
+
+function lockSettings() {
+  document.getElementById('settingsLock').style.display    = 'flex';
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('lockPin').value = '';
+  document.getElementById('lockError').textContent = '';
+}
+
+// ─── CHANGE PIN MODAL ────────────────────────────────────────
+function openChangePinModal() {
+  ['pinCurrent','pinNew','pinConfirm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pinModalError').textContent = '';
+  document.getElementById('pinModal').classList.add('open');
+}
+function closePinModal() {
+  document.getElementById('pinModal').classList.remove('open');
+}
+function savePin() {
+  const s       = getSettings();
+  const current = document.getElementById('pinCurrent').value.trim();
+  const nw      = document.getElementById('pinNew').value.trim();
+  const confirm = document.getElementById('pinConfirm').value.trim();
+  const errEl   = document.getElementById('pinModalError');
+  if (current !== s.pin)   { errEl.textContent='❌ Current PIN is incorrect.'; return; }
+  if (nw.length < 4)       { errEl.textContent='❌ New PIN must be at least 4 digits.'; return; }
+  if (!/^\d+$/.test(nw))   { errEl.textContent='❌ PIN must be numbers only.'; return; }
+  if (nw !== confirm)      { errEl.textContent='❌ PINs do not match.'; return; }
+  setSettings({ pin: nw });
+  closePinModal();
+  toast('✅ PIN changed successfully');
+}
+
+// ─── CSV URL BUILDER ─────────────────────────────────────────
+function buildCsvUrl(s) {
+  if (!s.user) return './data/products.csv';
+  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
+}
+
+// ─── SETTINGS UI ─────────────────────────────────────────────
+function loadSettingsUI() {
+  const s = getSettings();
+  document.getElementById('cfgUser').value      = s.user      || '';
+  document.getElementById('cfgRepo').value      = s.repo      || 'price-checker';
+  document.getElementById('cfgBranch').value    = s.branch    || 'main';
+  document.getElementById('cfgPath').value      = s.path      || 'data/products.csv';
+  document.getElementById('cfgCurrency').value  = s.currency  || '₱';
+  document.getElementById('cfgStoreName').value = s.storeName || 'PriceCheck';
+  document.getElementById('camSelect').value    = s.camFacing || 'environment';
+  ['cfgUser','cfgRepo','cfgBranch','cfgPath'].forEach(id=>{
+    document.getElementById(id).oninput = refreshPreviewUrl;
+  });
+  refreshPreviewUrl();
+}
+
+function refreshPreviewUrl() {
+  const s = {
+    user:  document.getElementById('cfgUser').value.trim(),
+    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
+    branch:document.getElementById('cfgBranch').value.trim()||'main',
+    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
+  };
+  document.getElementById('previewUrl').textContent = buildCsvUrl(s);
+}
+
+function saveSettings() {
+  setSettings({
+    user:  document.getElementById('cfgUser').value.trim(),
+    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
+    branch:document.getElementById('cfgBranch').value.trim()||'main',
+    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
+  });
+  toast('✅ Data source saved. Reload the main app to fetch new data.');
+}
+
+function saveDisplay() {
+  setSettings({
+    currency: document.getElementById('cfgCurrency').value.trim()||'₱',
+    storeName:document.getElementById('cfgStoreName').value.trim()||'PriceCheck',
+  });
+  toast('✅ Display settings saved');
+}
+
+function saveCamPref() {
+  setSettings({ camFacing: document.getElementById('camSelect').value });
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
+

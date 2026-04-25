@@ -100,7 +100,7 @@
     /* ── SCAN PAGE ── */
     #reader {
       width: 100%; background: #000;
-      max-height: 58vw; overflow: hidden;
+      overflow: hidden;
       position: relative;
     }
     /* hide html5-qrcode's own UI elements we don't want */
@@ -113,7 +113,7 @@
       display:flex; align-items:center; justify-content:center;
       pointer-events:none; z-index:10;
     }
-    .scan-frame { width: 200px; height: 140px; position: relative; }
+    .scan-frame { width: 220px; height: 150px; position: relative; }
     .scan-frame::before, .scan-frame::after,
     .scan-frame .cbr, .scan-frame .cbl {
       content:''; position:absolute; width:28px; height:28px;
@@ -207,72 +207,6 @@
     .pprice { font-size:1.1rem; font-weight:800; color:var(--price); white-space:nowrap; padding-left:10px; }
     .no-results { text-align:center; color:var(--muted); padding:40px 18px; font-size:0.95rem; }
 
-    /* ── SETTINGS PAGE ── */
-    #settingsLock {
-      display:flex; flex-direction:column; align-items:center;
-      justify-content:center; padding:40px 32px; gap:18px; flex:1;
-    }
-    .lock-icon  { font-size:3rem; }
-    .lock-title { font-size:1.2rem; font-weight:800; }
-    .lock-sub   { font-size:0.85rem; color:var(--muted); text-align:center; line-height:1.6; }
-    #lockPinWrap { display:flex; gap:10px; align-items:center; }
-    #lockPin {
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:var(--radius-sm); color:var(--text); font-size:1.3rem;
-      padding:12px 16px; outline:none; width:150px; text-align:center;
-      letter-spacing:6px; -webkit-appearance:none;
-    }
-    #lockPin:focus { border-color:var(--accent); }
-    #lockError { color:var(--danger); font-size:0.82rem; min-height:18px; }
-
-    #settingsContent { display:none; flex-direction:column; }
-
-    .settings-group {
-      margin:10px 18px; background:var(--surface);
-      border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
-    }
-    .settings-header {
-      padding:9px 16px; font-size:0.7rem; text-transform:uppercase;
-      letter-spacing:0.1em; color:var(--muted); background:var(--bg);
-    }
-    .settings-row {
-      display:flex; flex-direction:column; gap:5px;
-      padding:13px 16px; border-top:1px solid var(--border);
-    }
-    .settings-row:first-of-type { border-top:none; }
-    .settings-row label { font-size:0.82rem; color:var(--muted); font-weight:600; }
-    .settings-row input, .settings-row select {
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:8px; color:var(--text); font-size:0.95rem;
-      padding:10px 12px; outline:none; width:100%; -webkit-appearance:none;
-    }
-    .settings-row input:focus, .settings-row select:focus { border-color:var(--accent); }
-    .settings-note { padding:8px 16px 12px; font-size:0.78rem; color:var(--muted); line-height:1.6; }
-    .save-btn-wrap { padding:4px 18px 10px; }
-
-    /* ── MODAL ── */
-    .modal-backdrop {
-      position:fixed; inset:0; background:rgba(0,0,0,0.75);
-      display:none; align-items:center; justify-content:center;
-      z-index:500; padding:20px;
-    }
-    .modal-backdrop.open { display:flex; }
-    .modal {
-      background:var(--surface); border:1px solid var(--border);
-      border-radius:var(--radius); padding:24px; width:100%; max-width:380px;
-      display:flex; flex-direction:column; gap:14px;
-    }
-    .modal h3 { font-size:1.1rem; font-weight:800; }
-    .modal input {
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:8px; color:var(--text); font-size:1rem;
-      padding:11px 14px; outline:none; width:100%; -webkit-appearance:none;
-      letter-spacing:3px;
-    }
-    .modal input:focus { border-color:var(--accent); }
-    .modal-btns { display:flex; gap:10px; }
-    .modal-error { color:var(--danger); font-size:0.82rem; min-height:16px; }
-
     /* ── TOAST ── */
     #toast {
       position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
@@ -292,7 +226,7 @@
   <div id="dbStatusBadge" class="status-badge err">
     <div class="dot"></div><span>No Data</span>
   </div>
-  <button class="icon-btn" onclick="goSettings()" title="Settings">⚙️</button>
+  <a class="icon-btn" href="settings.html" title="Settings">⚙️</a>
 </header>
 
 <!-- ══ SCAN PAGE ══════════════════════════════════════════════ -->
@@ -331,113 +265,6 @@
   <div id="browseList" class="product-list"></div>
 </div>
 
-<!-- ══ SETTINGS PAGE ══════════════════════════════════════════ -->
-<div id="page-settings" class="page">
-
-  <!-- LOCK SCREEN -->
-  <div id="settingsLock">
-    <div class="lock-icon">🔒</div>
-    <div class="lock-title">Settings Locked</div>
-    <div class="lock-sub">Enter your PIN to access settings.<br>Default PIN: <strong>1234</strong></div>
-    <div id="lockPinWrap">
-      <input id="lockPin" type="password" inputmode="numeric" maxlength="8"
-             placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" />
-      <button class="btn btn-primary" onclick="unlockSettings()">Unlock</button>
-    </div>
-    <div id="lockError"></div>
-  </div>
-
-  <!-- SETTINGS CONTENT -->
-  <div id="settingsContent">
-    <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:1.1rem;font-weight:800;">Settings</div>
-      <button class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem;" onclick="lockSettings()">🔒 Lock</button>
-    </div>
-
-    <!-- DATA SOURCE -->
-    <div class="settings-group">
-      <div class="settings-header">📦 Data Source (GitHub CSV)</div>
-      <div class="settings-row">
-        <label>GitHub Username</label>
-        <input id="cfgUser" type="text" placeholder="e.g. yourusername" autocomplete="off" />
-      </div>
-      <div class="settings-row">
-        <label>Repository Name</label>
-        <input id="cfgRepo" type="text" placeholder="e.g. price-checker" autocomplete="off" />
-      </div>
-      <div class="settings-row">
-        <label>Branch</label>
-        <input id="cfgBranch" type="text" placeholder="main" autocomplete="off" />
-      </div>
-      <div class="settings-row">
-        <label>CSV File Path</label>
-        <input id="cfgPath" type="text" placeholder="data/products.csv" autocomplete="off" />
-      </div>
-      <div class="settings-note">
-        CSV URL preview:<br>
-        <code style="color:var(--accent);font-size:0.77rem;word-break:break-all;" id="previewUrl">—</code>
-      </div>
-    </div>
-    <div class="save-btn-wrap">
-      <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Save &amp; Reload Data</button>
-    </div>
-
-    <!-- CAMERA -->
-    <div class="settings-group">
-      <div class="settings-header">📷 Camera</div>
-      <div class="settings-row">
-        <label>Preferred Camera</label>
-        <select id="camSelect" onchange="saveCamPref()">
-          <option value="environment">Back Camera (default)</option>
-          <option value="user">Front Camera</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- DISPLAY -->
-    <div class="settings-group">
-      <div class="settings-header">💱 Display</div>
-      <div class="settings-row">
-        <label>Currency Symbol</label>
-        <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
-      </div>
-      <div class="settings-row">
-        <label>Store Name</label>
-        <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
-      </div>
-    </div>
-    <div class="save-btn-wrap" style="padding-top:0">
-      <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
-    </div>
-
-    <!-- SECURITY -->
-    <div class="settings-group">
-      <div class="settings-header">🔐 Security</div>
-      <div class="settings-note" style="padding-top:12px;">
-        Change the PIN required to open Settings.<br>
-        Default is <strong>1234</strong> — update it after first setup.
-      </div>
-      <div style="padding:0 16px 14px;">
-        <button class="btn btn-warn btn-full" onclick="openChangePinModal()">🔑 Change PIN</button>
-      </div>
-    </div>
-
-    <!-- ABOUT -->
-    <div class="settings-group">
-      <div class="settings-header">ℹ️ GitHub Folder Structure</div>
-      <div class="settings-note" style="padding-top:10px;">
-        📁 your-repo/<br>
-        &nbsp;&nbsp;📄 index.html<br>
-        &nbsp;&nbsp;📄 manifest.json<br>
-        &nbsp;&nbsp;📁 data/<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
-        Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
-      </div>
-    </div>
-    <div style="height:10px;"></div>
-  </div><!-- /settingsContent -->
-</div>
-
 <!-- ══ BOTTOM TAB BAR ═════════════════════════════════════════ -->
 <nav class="tabbar">
   <button class="tab active" id="tab-scan"     onclick="showTab('scan')">
@@ -446,25 +273,7 @@
   <button class="tab"        id="tab-search"   onclick="showTab('search')">
     <span class="tab-icon">🔍</span>Browse
   </button>
-  <button class="tab"        id="tab-settings" onclick="goSettings()">
-    <span class="tab-icon">⚙️</span>Settings
-  </button>
 </nav>
-
-<!-- ══ CHANGE PIN MODAL ═══════════════════════════════════════ -->
-<div id="pinModal" class="modal-backdrop">
-  <div class="modal">
-    <h3>🔑 Change PIN</h3>
-    <input id="pinCurrent" type="password" inputmode="numeric" placeholder="Current PIN" maxlength="8" />
-    <input id="pinNew"     type="password" inputmode="numeric" placeholder="New PIN (4–8 digits)" maxlength="8" />
-    <input id="pinConfirm" type="password" inputmode="numeric" placeholder="Confirm New PIN" maxlength="8" />
-    <div class="modal-error" id="pinModalError"></div>
-    <div class="modal-btns">
-      <button class="btn btn-ghost btn-full" onclick="closePinModal()">Cancel</button>
-      <button class="btn btn-primary btn-full" onclick="savePin()">Save PIN</button>
-    </div>
-  </div>
-</div>
 
 <div id="toast"></div>
 
@@ -511,63 +320,6 @@ function showTab(name) {
   if (name==='search') renderBrowse();
 }
 
-function goSettings() {
-  showTab('settings');
-  document.getElementById('settingsLock').style.display    = 'flex';
-  document.getElementById('settingsContent').style.display = 'none';
-  document.getElementById('lockPin').value = '';
-  document.getElementById('lockError').textContent = '';
-}
-
-// ─── LOCK ────────────────────────────────────────────────────
-function unlockSettings() {
-  const entered = document.getElementById('lockPin').value.trim();
-  const correct = getSettings().pin || '1234';
-  if (entered === correct) {
-    document.getElementById('settingsLock').style.display    = 'none';
-    document.getElementById('settingsContent').style.display = 'flex';
-    loadSettingsUI();
-  } else {
-    document.getElementById('lockError').textContent = '❌ Wrong PIN. Try again.';
-    document.getElementById('lockPin').value = '';
-    // shake effect
-    const el = document.getElementById('lockPin');
-    el.style.borderColor = 'var(--danger)';
-    setTimeout(()=>{ el.style.borderColor=''; }, 1000);
-  }
-}
-
-function lockSettings() {
-  document.getElementById('settingsLock').style.display    = 'flex';
-  document.getElementById('settingsContent').style.display = 'none';
-  document.getElementById('lockPin').value = '';
-  document.getElementById('lockError').textContent = '';
-}
-
-// ─── CHANGE PIN MODAL ────────────────────────────────────────
-function openChangePinModal() {
-  ['pinCurrent','pinNew','pinConfirm'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('pinModalError').textContent = '';
-  document.getElementById('pinModal').classList.add('open');
-}
-function closePinModal() {
-  document.getElementById('pinModal').classList.remove('open');
-}
-function savePin() {
-  const s       = getSettings();
-  const current = document.getElementById('pinCurrent').value.trim();
-  const nw      = document.getElementById('pinNew').value.trim();
-  const confirm = document.getElementById('pinConfirm').value.trim();
-  const errEl   = document.getElementById('pinModalError');
-  if (current !== s.pin)   { errEl.textContent='❌ Current PIN is incorrect.'; return; }
-  if (nw.length < 4)       { errEl.textContent='❌ New PIN must be at least 4 digits.'; return; }
-  if (!/^\d+$/.test(nw))   { errEl.textContent='❌ PIN must be numbers only.'; return; }
-  if (nw !== confirm)      { errEl.textContent='❌ PINs do not match.'; return; }
-  setSettings({ pin: nw });
-  closePinModal();
-  toast('✅ PIN changed successfully');
-}
-
 // ─── CSV ─────────────────────────────────────────────────────
 async function loadCSV(showFeedback=false) {
   const s   = getSettings();
@@ -610,55 +362,6 @@ function updateDbBadge(ok, count) {
   else           { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>No Data'; }
 }
 
-// ─── SETTINGS UI ─────────────────────────────────────────────
-function loadSettingsUI() {
-  const s = getSettings();
-  document.getElementById('cfgUser').value      = s.user      || '';
-  document.getElementById('cfgRepo').value      = s.repo      || 'price-checker';
-  document.getElementById('cfgBranch').value    = s.branch    || 'main';
-  document.getElementById('cfgPath').value      = s.path      || 'data/products.csv';
-  document.getElementById('cfgCurrency').value  = s.currency  || '₱';
-  document.getElementById('cfgStoreName').value = s.storeName || 'PriceCheck';
-  document.getElementById('camSelect').value    = s.camFacing || 'environment';
-  ['cfgUser','cfgRepo','cfgBranch','cfgPath'].forEach(id=>{
-    document.getElementById(id).oninput = refreshPreviewUrl;
-  });
-  refreshPreviewUrl();
-}
-
-function refreshPreviewUrl() {
-  const s = {
-    user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
-  };
-  document.getElementById('previewUrl').textContent = buildCsvUrl(s);
-}
-
-function saveSettings() {
-  setSettings({
-    user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
-  });
-  loadCSV(true);
-}
-
-function saveDisplay() {
-  setSettings({
-    currency: document.getElementById('cfgCurrency').value.trim()||'₱',
-    storeName:document.getElementById('cfgStoreName').value.trim()||'PriceCheck',
-  });
-  applyDisplaySettings();
-  toast('✅ Display settings saved');
-}
-
-function saveCamPref() {
-  setSettings({ camFacing: document.getElementById('camSelect').value });
-}
-
 // ─── SCANNER (html5-qrcode — works on Android Chrome) ────────
 async function startScan() {
   if (scanning) return;
@@ -681,7 +384,7 @@ async function startScan() {
     html5Qr = new Html5Qrcode('reader');
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:10, qrbox:{ width:220, height:150 } },
+      { fps:2, qrbox:{ width:220, height:150 } },
       (decoded) => handleBarcode(decoded),
       (_err) => { /* ignore per-frame decode fails */ }
     );
@@ -717,7 +420,7 @@ async function flipCamera() {
     await html5Qr.stop();
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:10, qrbox:{ width:220, height:150 } },
+      { fps:2, qrbox:{ width:220, height:150 } },
       (decoded) => handleBarcode(decoded),
       () => {}
     );
@@ -733,10 +436,14 @@ function setScanStatus(msg, cls='') {
 
 // ─── LOOKUP ──────────────────────────────────────────────────
 let lastBarcode='';
+let scanCooldown = false;
 function handleBarcode(code) {
-  if (code===lastBarcode) return;
+  // Only accept 13-digit numeric barcodes (EAN-13)
+  if (!/^\d{13}$/.test(code)) return;
+  if (code===lastBarcode || scanCooldown) return;
   lastBarcode=code;
-  setTimeout(()=>{ lastBarcode=''; }, 2500);
+  scanCooldown = true;
+  setTimeout(()=>{ lastBarcode=''; scanCooldown=false; }, 1500);
   navigator.vibrate && navigator.vibrate([60]);
   setScanStatus('Scanned: '+code, 'active-scan');
   showResult(code);
