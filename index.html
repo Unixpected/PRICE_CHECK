@@ -286,7 +286,7 @@
 <script>
 // ─── STORAGE ─────────────────────────────────────────────────
 const DEFAULT = {
-  user:'', repo:'price-checker', branch:'main', path:'data/products.csv',
+  user:'unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv',
   currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
 };
 function getSettings() {
@@ -328,19 +328,45 @@ function showTab(name) {
 }
 
 // ─── CSV ─────────────────────────────────────────────────────
-const CSV_URL = 'https://raw.githubusercontent.com/unixpected/PRICE_CHECK/main/products.csv';
+function buildCsvUrl(s) {
+  if (!s.user) return './data/products.csv';
+  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
+}
+
+async function fetchGitHubFileTimestamp() {
+  const s = getSettings();
+  if (!s.user) return null;
+  try {
+    const apiUrl = 'https://api.github.com/repos/'+s.user+'/'+s.repo+'/commits?path='+encodeURIComponent(s.path)+'&per_page=1';
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error('API '+res.status);
+    const commits = await res.json();
+    if (commits && commits.length > 0 && commits[0].commit && commits[0].commit.committer) {
+      return new Date(commits[0].commit.committer.date).getTime();
+    }
+    return null;
+  } catch(e) {
+    console.warn('GitHub timestamp fetch failed', e);
+    return null;
+  }
+}
 
 async function loadCSV(showFeedback=false) {
   updateDbBadge(null);
   try {
-    const res = await fetch(CSV_URL+'?nc='+Date.now());
+    const url = buildCsvUrl(getSettings()) + '?nc='+Date.now();
+    const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     products = parseCSV(text);
     localStorage.setItem('pcCsvCache', text);
-    localStorage.setItem('pcCsvTimestamp', Date.now());
+
+    const ghTs = await fetchGitHubFileTimestamp();
+    const finalTs = ghTs || Date.now();
+    localStorage.setItem('pcCsvTimestamp', finalTs);
+
     updateDbBadge(true, products.length);
-    updateLastUpdated(Date.now());
+    updateLastUpdated(finalTs);
     if (showFeedback) toast('✅ Loaded '+products.length+' products');
   } catch(e) {
     if (products.length === 0) {
@@ -564,3 +590,4 @@ function toast(msg) {
 </script>
 </body>
 </html>
+
