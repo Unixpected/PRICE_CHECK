@@ -165,7 +165,7 @@
 <div id="settingsLock">
   <div class="lock-icon">🔒</div>
   <div class="lock-title">Settings Locked</div>
-  <div class="lock-sub">Enter your PIN to access settings.<br>Default PIN: <strong>1234</strong></div>
+    <div class="lock-sub">Enter your PIN to access settings.</div>
   <div id="lockPinWrap">
     <input id="lockPin" type="password" inputmode="numeric" maxlength="8"
            placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" />
@@ -241,8 +241,7 @@
   <div class="settings-group">
     <div class="settings-header">🔐 Security</div>
     <div class="settings-note" style="padding-top:12px;">
-      Change the PIN required to open Settings.<br>
-      Default is <strong>1234</strong> — update it after first setup.
+      Change the PIN required to open Settings.
     </div>
     <div style="padding:0 16px 14px;">
       <button class="btn btn-warn btn-full" onclick="openChangePinModal()">🔑 Change PIN</button>
