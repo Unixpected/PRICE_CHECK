@@ -96,10 +96,12 @@
     /* ── PAGES ── */
     .page { display:none; flex:1; flex-direction:column; padding-bottom:80px; overflow-y:auto; }
     .page.active { display:flex; }
+    #page-scan { overflow:hidden; padding-bottom:0; }
+    #page-search { overflow-y:auto; }
 
     /* ── SCAN PAGE ── */
     #reader {
-      width: 100%; height: 260px; background: #000;
+      width: 100%; height: 200px; background: #000;
       overflow: hidden;
       position: relative;
       flex-shrink: 0;
@@ -114,7 +116,7 @@
       display:flex; align-items:center; justify-content:center;
       pointer-events:none; z-index:10;
     }
-    .scan-frame { width: 180px; height: 120px; position: relative; }
+    .scan-frame { width: 160px; height: 100px; position: relative; }
     .scan-frame::before, .scan-frame::after,
     .scan-frame .cbr, .scan-frame .cbl {
       content:''; position:absolute; width:22px; height:22px;
@@ -137,14 +139,14 @@
     }
 
     .scan-status {
-      text-align:center; padding:12px 18px 6px;
-      font-size:0.85rem; color:var(--muted);
+      text-align:center; padding:6px 18px 4px;
+      font-size:0.8rem; color:var(--muted);
     }
     .scan-status.active-scan { color:var(--accent); }
     .scan-status.scan-error  { color:var(--danger); }
 
     .cam-controls {
-      display:flex; gap:10px; padding:6px 18px 10px;
+      display:flex; gap:8px; padding:4px 18px 6px;
       justify-content:center; flex-wrap:wrap;
     }
     .btn {
@@ -170,12 +172,22 @@
     .search-input:focus { border-color:var(--accent); }
     .search-input::placeholder { color:var(--muted); }
 
+    /* scan page compact overrides */
+    #page-scan .search-row { padding:4px 18px; }
+    #page-scan .search-input { padding:8px 12px; font-size:0.95rem; }
+    #page-scan .btn { padding:8px 16px; font-size:0.85rem; }
+
     /* ── RESULT CARD ── */
     .result-card {
       margin:6px 18px; background:var(--surface);
       border:1px solid var(--border); border-radius:var(--radius);
       padding:18px; animation:fadeUp 0.25s ease;
     }
+    #page-scan .result-card { margin:4px 12px; padding:12px; }
+    #page-scan .result-name { font-size:1rem; margin-bottom:8px; }
+    #page-scan .result-price { font-size:1.8rem; }
+    #page-scan .result-meta { margin-top:8px; gap:6px; }
+    #page-scan .tag { padding:3px 8px; font-size:0.7rem; }
     @keyframes fadeUp {
       from { opacity:0; transform:translateY(10px); }
       to   { opacity:1; transform:translateY(0); }
@@ -225,7 +237,7 @@
 <header class="topbar">
   <div>
     <div class="logo" id="logoText">Price<span>Check</span></div>
-    <div id="lastUpdated" style="font-size:0.65rem;color:var(--muted);margin-top:1px;"></div>
+    <div id="lastUpdated" style="font-size:0.72rem;color:var(--accent);margin-top:2px;font-weight:500;"></div>
   </div>
   <div id="dbStatusBadge" class="status-badge err">
     <div class="dot"></div><span>No Data</span>
@@ -256,8 +268,8 @@
     <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
   <div id="resultArea"></div>
-  <div style="padding:6px 18px 12px;">
-    <button class="btn btn-ghost btn-full" style="padding:8px 14px;font-size:0.82rem;" onclick="loadCSV(true)">🔄 Refresh Product Data</button>
+  <div style="padding:4px 18px 8px;">
+    <button class="btn btn-ghost btn-full" style="padding:6px 12px;font-size:0.78rem;" onclick="loadCSV(true)">🔄 Refresh Product Data</button>
   </div>
 </div>
 
