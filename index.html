@@ -223,7 +223,10 @@
 
 <!-- TOP BAR -->
 <header class="topbar">
-  <div class="logo" id="logoText">Price<span>Check</span></div>
+  <div>
+    <div class="logo" id="logoText">Price<span>Check</span></div>
+    <div id="lastUpdated" style="font-size:0.65rem;color:var(--muted);margin-top:1px;"></div>
+  </div>
   <div id="dbStatusBadge" class="status-badge err">
     <div class="dot"></div><span>No Data</span>
   </div>
@@ -241,7 +244,6 @@
     </div>
   </div>
   <div id="scanStatus" class="scan-status">Press Start to activate camera</div>
-  <div id="lastUpdated" style="text-align:center;font-size:0.75rem;color:var(--muted);padding:0 18px 8px;"></div>
   <div class="cam-controls">
     <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
     <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
@@ -254,6 +256,9 @@
     <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
   <div id="resultArea"></div>
+  <div style="padding:6px 18px 12px;">
+    <button class="btn btn-ghost btn-full" style="padding:8px 14px;font-size:0.82rem;" onclick="loadCSV(true)">🔄 Refresh Product Data</button>
+  </div>
 </div>
 
 <!-- ══ BROWSE PAGE ════════════════════════════════════════════ -->
@@ -506,7 +511,7 @@ function showResult(query) {
       <div class="result-price"><span class="peso">${cur}</span>${formatPrice(price)}</div>
       <div class="result-meta">
         ${hit.cupc&&hit.cupc!=='0'?`<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>`:''}
-        <div class="tag">SKU: <strong>${escHtml(hit.sku)}</strong></div>
+        <div class="tag">SKU: <strong>${escHtml(String(hit.sku).replace(/\.00$/,''))}</strong></div>
         <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
         ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
       </div>
@@ -526,10 +531,10 @@ function renderBrowse() {
   const el = document.getElementById('browseList');
   if (!filtered.length) { el.innerHTML='<div class="no-results">No products found</div>'; return; }
   el.innerHTML = filtered.map(p=>`
-    <div class="product-item" onclick="selectProduct('${escAttr(p.cupc&&p.cupc!=='0'?p.cupc:p.sku)}')">
+    <div class="product-item" onclick="selectProduct('${escAttr(p.cupc&&p.cupc!=='0'?p.cupc:String(p.sku).replace(/\.00$/,''))}')">
       <div style="min-width:0;flex:1">
         <div class="pname">${escHtml(p.citem)}</div>
-        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${p.sku} · ${p.cuom}</div>
+        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${String(p.sku).replace(/\.00$/,'')} · ${p.cuom}</div>
       </div>
       <div class="pprice">${cur}${formatPrice(parseFloat(p.mprice)||0)}</div>
     </div>`).join('');
@@ -547,7 +552,7 @@ function escHtml(s) {
 }
 function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
 function formatPrice(n) {
-  return n%1===0 ? n.toLocaleString() : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return Number.isInteger(n) ? n.toLocaleString(undefined, {maximumFractionDigits:0}) : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 }
 let toastTimer;
 function toast(msg) {
