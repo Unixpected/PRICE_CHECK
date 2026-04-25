@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <!-- ZXing barcode library (no install needed, CDN) -->
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <!-- html5-qrcode: actively maintained, works on Android Chrome -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
     :root {
@@ -20,7 +20,6 @@
       --surface2: #273549;
       --border: #334155;
       --accent: #38bdf8;
-      --accent2: #818cf8;
       --success: #4ade80;
       --danger: #f87171;
       --text: #f1f5f9;
@@ -47,367 +46,262 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px;
+      padding: 12px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 100;
+      gap: 10px;
     }
     .topbar .logo {
-      font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--accent);
+      font-size: 1.1rem; font-weight: 800;
+      letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
     }
     .topbar .logo span { color: var(--text); }
     .icon-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      width: 40px; height: 40px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; width: 40px; height: 40px;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      color: var(--text);
-      font-size: 1.2rem;
-      transition: background 0.15s;
+      cursor: pointer; color: var(--text); font-size: 1.2rem;
+      transition: background 0.15s; flex-shrink: 0;
     }
     .icon-btn:active { background: var(--border); }
 
+    /* badge */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
+      font-weight: 600; white-space: nowrap; flex-shrink: 0;
+    }
+    .status-badge.ok  { background:#052e16; color:var(--success); border:1px solid #166534; }
+    .status-badge.err { background:#450a0a; color:var(--danger);  border:1px solid #991b1b; }
+    .status-badge .dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
     /* ── BOTTOM TAB BAR ── */
     .tabbar {
-      display: flex;
-      background: var(--surface);
+      display: flex; background: var(--surface);
       border-top: 1px solid var(--border);
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 100;
+      position: fixed; bottom:0; left:0; right:0; z-index:100;
       padding-bottom: env(safe-area-inset-bottom);
     }
     .tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      padding: 10px 0 8px;
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      transition: color 0.15s;
-      border: none;
-      background: none;
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; padding: 10px 0 8px; cursor: pointer; color: var(--muted);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em;
+      text-transform: uppercase; transition: color 0.15s;
+      border: none; background: none;
     }
     .tab .tab-icon { font-size: 1.3rem; }
     .tab.active { color: var(--accent); }
 
     /* ── PAGES ── */
-    .page { display: none; flex: 1; flex-direction: column; padding-bottom: 80px; }
-    .page.active { display: flex; }
+    .page { display:none; flex:1; flex-direction:column; padding-bottom:80px; overflow-y:auto; }
+    .page.active { display:flex; }
 
     /* ── SCAN PAGE ── */
-    .scan-area {
-      position: relative;
-      width: 100%;
-      background: #000;
-      aspect-ratio: 4/3;
-      overflow: hidden;
-      max-height: 55vw;
-    }
-    #video {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .scan-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .scan-frame {
-      width: 200px; height: 140px;
+    #reader {
+      width: 100%; background: #000;
+      max-height: 58vw; overflow: hidden;
       position: relative;
     }
-    .scan-frame::before, .scan-frame::after,
-    .scan-frame .corner-br, .scan-frame .corner-bl {
-      content: '';
-      position: absolute;
-      width: 28px; height: 28px;
-      border-color: var(--accent);
-      border-style: solid;
-    }
-    .scan-frame::before { top: 0; left: 0; border-width: 3px 0 0 3px; }
-    .scan-frame::after  { top: 0; right: 0; border-width: 3px 3px 0 0; }
-    .scan-frame .corner-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
-    .scan-frame .corner-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
-    .scan-line {
-      position: absolute;
-      left: 10%; right: 10%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      animation: scan 2s ease-in-out infinite;
-      border-radius: 2px;
-    }
-    @keyframes scan {
-      0%   { top: 12%; opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 1; }
-      100% { top: 88%; opacity: 0; }
-    }
-    .scan-status {
-      text-align: center;
-      padding: 14px 18px 8px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .scan-status.active-scan { color: var(--accent); }
-    .scan-status.error       { color: var(--danger); }
+    /* hide html5-qrcode's own UI elements we don't want */
+    #reader img, #reader select, #reader button { display:none !important; }
+    #reader video { width:100% !important; object-fit:cover; }
 
-    /* Camera controls */
+    .scan-overlay-wrap { position: relative; width:100%; }
+    .scan-overlay-frame {
+      position: absolute; inset:0; top:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; z-index:10;
+    }
+    .scan-frame { width: 200px; height: 140px; position: relative; }
+    .scan-frame::before, .scan-frame::after,
+    .scan-frame .cbr, .scan-frame .cbl {
+      content:''; position:absolute; width:28px; height:28px;
+      border-color:var(--accent); border-style:solid;
+    }
+    .scan-frame::before { top:0; left:0;    border-width:3px 0 0 3px; }
+    .scan-frame::after  { top:0; right:0;   border-width:3px 3px 0 0; }
+    .scan-frame .cbr    { bottom:0; right:0; border-width:0 3px 3px 0; }
+    .scan-frame .cbl    { bottom:0; left:0;  border-width:0 0 3px 3px; }
+    .scan-line {
+      position:absolute; left:10%; right:10%; height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      animation:scanline 2s ease-in-out infinite; border-radius:2px;
+    }
+    @keyframes scanline {
+      0%   { top:12%; opacity:0; }
+      10%  { opacity:1; }
+      90%  { opacity:1; }
+      100% { top:88%; opacity:0; }
+    }
+
+    .scan-status {
+      text-align:center; padding:12px 18px 6px;
+      font-size:0.85rem; color:var(--muted);
+    }
+    .scan-status.active-scan { color:var(--accent); }
+    .scan-status.scan-error  { color:var(--danger); }
+
     .cam-controls {
-      display: flex;
-      gap: 10px;
-      padding: 0 18px 10px;
-      justify-content: center;
+      display:flex; gap:10px; padding:6px 18px 10px;
+      justify-content:center; flex-wrap:wrap;
     }
     .btn {
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      border:none; border-radius:var(--radius-sm);
+      padding:10px 20px; font-size:0.9rem; font-weight:700;
+      cursor:pointer; transition:opacity 0.15s, transform 0.1s;
+      display:flex; align-items:center; gap:7px;
     }
-    .btn:active { transform: scale(0.96); opacity: 0.8; }
-    .btn-primary { background: var(--accent); color: #0f172a; }
-    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-danger { background: var(--danger); color: #0f172a; }
-    .btn-full { width: 100%; justify-content: center; }
+    .btn:active { transform:scale(0.96); opacity:0.8; }
+    .btn-primary { background:var(--accent); color:#0f172a; }
+    .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-full    { width:100%; justify-content:center; }
+    .btn-warn    { background:#92400e; color:#fef3c7; border:1px solid #b45309; }
 
-    /* Manual search */
     .search-row {
-      display: flex;
-      gap: 10px;
-      padding: 10px 18px;
-      align-items: center;
+      display:flex; gap:10px; padding:8px 18px; align-items:center;
     }
     .search-input {
-      flex: 1;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-size: 1rem;
-      padding: 11px 14px;
-      outline: none;
-      -webkit-appearance: none;
+      flex:1; background:var(--surface2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text); font-size:1rem;
+      padding:11px 14px; outline:none; -webkit-appearance:none;
     }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color:var(--accent); }
+    .search-input::placeholder { color:var(--muted); }
 
     /* ── RESULT CARD ── */
     .result-card {
-      margin: 6px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      animation: fadeUp 0.25s ease;
+      margin:6px 18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px; animation:fadeUp 0.25s ease;
     }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
-    .result-card.not-found { border-color: var(--danger); }
-    .result-card.found     { border-color: var(--success); }
-
-    .result-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .result-name {
-      font-size: 1.15rem;
-      font-weight: 800;
-      margin-bottom: 12px;
-      line-height: 1.3;
-    }
-    .result-price {
-      font-size: 2.4rem;
-      font-weight: 900;
-      color: var(--price);
-      letter-spacing: -1px;
-      margin-bottom: 4px;
-    }
-    .result-price .peso { font-size: 1.4rem; vertical-align: super; }
-    .result-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
+    .result-card.not-found { border-color:var(--danger); }
+    .result-card.found     { border-color:var(--success); }
+    .result-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:4px; }
+    .result-name  { font-size:1.15rem; font-weight:800; margin-bottom:12px; line-height:1.3; }
+    .result-price { font-size:2.4rem; font-weight:900; color:var(--price); letter-spacing:-1px; margin-bottom:4px; }
+    .result-price .peso { font-size:1.4rem; vertical-align:super; }
+    .result-meta  { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
     .tag {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      color: var(--muted);
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; padding:4px 10px; font-size:0.75rem; color:var(--muted);
     }
-    .tag strong { color: var(--text); }
+    .tag strong { color:var(--text); }
 
-    /* ── SEARCH PAGE ── */
-    .page-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      padding: 18px 18px 10px;
-    }
-    .product-list { padding: 0 18px; display: flex; flex-direction: column; gap: 8px; }
+    /* ── BROWSE PAGE ── */
+    .page-title { font-size:1.2rem; font-weight:800; padding:16px 18px 8px; }
+    .product-list { padding:0 18px; display:flex; flex-direction:column; gap:8px; }
     .product-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: border-color 0.15s;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:14px; cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center;
+      transition:border-color 0.15s;
     }
-    .product-item:active { border-color: var(--accent); }
-    .product-item .pname { font-size: 0.9rem; font-weight: 600; }
-    .product-item .pmeta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-    .product-item .pprice { font-size: 1.1rem; font-weight: 800; color: var(--price); white-space: nowrap; }
-    .no-results { text-align: center; color: var(--muted); padding: 40px 18px; font-size: 0.95rem; }
+    .product-item:active { border-color:var(--accent); }
+    .pname { font-size:0.9rem; font-weight:600; }
+    .pmeta { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+    .pprice { font-size:1.1rem; font-weight:800; color:var(--price); white-space:nowrap; padding-left:10px; }
+    .no-results { text-align:center; color:var(--muted); padding:40px 18px; font-size:0.95rem; }
 
     /* ── SETTINGS PAGE ── */
+    #settingsLock {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; padding:40px 32px; gap:18px; flex:1;
+    }
+    .lock-icon  { font-size:3rem; }
+    .lock-title { font-size:1.2rem; font-weight:800; }
+    .lock-sub   { font-size:0.85rem; color:var(--muted); text-align:center; line-height:1.6; }
+    #lockPinWrap { display:flex; gap:10px; align-items:center; }
+    #lockPin {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text); font-size:1.3rem;
+      padding:12px 16px; outline:none; width:150px; text-align:center;
+      letter-spacing:6px; -webkit-appearance:none;
+    }
+    #lockPin:focus { border-color:var(--accent); }
+    #lockError { color:var(--danger); font-size:0.82rem; min-height:18px; }
+
+    #settingsContent { display:none; flex-direction:column; }
+
     .settings-group {
-      margin: 12px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
+      margin:10px 18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
     }
     .settings-header {
-      padding: 10px 16px;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      background: var(--bg);
+      padding:9px 16px; font-size:0.7rem; text-transform:uppercase;
+      letter-spacing:0.1em; color:var(--muted); background:var(--bg);
     }
     .settings-row {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
+      display:flex; flex-direction:column; gap:5px;
+      padding:13px 16px; border-top:1px solid var(--border);
     }
-    .settings-row:first-of-type { border-top: none; }
-    .settings-row label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+    .settings-row:first-of-type { border-top:none; }
+    .settings-row label { font-size:0.82rem; color:var(--muted); font-weight:600; }
     .settings-row input, .settings-row select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 0.95rem;
-      padding: 10px 12px;
-      outline: none;
-      width: 100%;
-      -webkit-appearance: none;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:0.95rem;
+      padding:10px 12px; outline:none; width:100%; -webkit-appearance:none;
     }
-    .settings-row input:focus, .settings-row select:focus { border-color: var(--accent); }
-    .settings-note {
-      padding: 8px 16px 12px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    .save-btn-wrap { padding: 4px 18px 12px; }
+    .settings-row input:focus, .settings-row select:focus { border-color:var(--accent); }
+    .settings-note { padding:8px 16px 12px; font-size:0.78rem; color:var(--muted); line-height:1.6; }
+    .save-btn-wrap { padding:4px 18px 10px; }
 
-    /* status badge */
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-weight: 600;
-      margin: 8px 18px 0;
+    /* ── MODAL ── */
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      display:none; align-items:center; justify-content:center;
+      z-index:500; padding:20px;
     }
-    .status-badge.ok  { background: #052e16; color: var(--success); border: 1px solid #166534; }
-    .status-badge.err { background: #450a0a; color: var(--danger);  border: 1px solid #991b1b; }
-    .status-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .modal-backdrop.open { display:flex; }
+    .modal {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:24px; width:100%; max-width:380px;
+      display:flex; flex-direction:column; gap:14px;
+    }
+    .modal h3 { font-size:1.1rem; font-weight:800; }
+    .modal input {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:1rem;
+      padding:11px 14px; outline:none; width:100%; -webkit-appearance:none;
+      letter-spacing:3px;
+    }
+    .modal input:focus { border-color:var(--accent); }
+    .modal-btns { display:flex; gap:10px; }
+    .modal-error { color:var(--danger); font-size:0.82rem; min-height:16px; }
 
-    /* toast */
+    /* ── TOAST ── */
     #toast {
-      position: fixed;
-      bottom: 90px;
-      left: 50%; transform: translateX(-50%);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 20px;
-      border-radius: 30px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 999;
+      position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+      background:var(--surface2); border:1px solid var(--border); color:var(--text);
+      padding:10px 20px; border-radius:30px; font-size:0.85rem; font-weight:600;
+      opacity:0; transition:opacity 0.3s; pointer-events:none;
+      white-space:nowrap; z-index:999;
     }
-    #toast.show { opacity: 1; }
-
-    /* camera picker */
-    .cam-list { padding: 0 18px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-    .cam-option {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      cursor: pointer;
-      font-size: 0.88rem;
-      transition: border-color 0.15s;
-    }
-    .cam-option.selected { border-color: var(--accent); color: var(--accent); }
-
-    .divider { height: 1px; background: var(--border); margin: 4px 18px; }
+    #toast.show { opacity:1; }
   </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <header class="topbar">
-  <div class="logo">Price<span>Check</span></div>
-  <div id="dbStatusBadge" class="status-badge err" style="margin:0;padding:4px 10px;font-size:0.72rem;">
+  <div class="logo" id="logoText">Price<span>Check</span></div>
+  <div id="dbStatusBadge" class="status-badge err">
     <div class="dot"></div><span>No Data</span>
   </div>
-  <button class="icon-btn" onclick="showTab('settings')" title="Settings">⚙️</button>
+  <button class="icon-btn" onclick="goSettings()" title="Settings">⚙️</button>
 </header>
 
-<!-- PAGES -->
-<!-- SCAN PAGE -->
+<!-- ══ SCAN PAGE ══════════════════════════════════════════════ -->
 <div id="page-scan" class="page active">
-  <div class="scan-area">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="scan-overlay">
+  <div class="scan-overlay-wrap">
+    <div id="reader"></div>
+    <div class="scan-overlay-frame">
       <div class="scan-frame">
-        <div class="corner-br"></div>
-        <div class="corner-bl"></div>
+        <div class="cbr"></div><div class="cbl"></div>
         <div class="scan-line"></div>
       </div>
     </div>
@@ -415,229 +309,319 @@
   <div id="scanStatus" class="scan-status">Press Start to activate camera</div>
   <div class="cam-controls">
     <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
-    <button class="btn btn-ghost" id="btnStop" onclick="stopScan()" style="display:none">⏹ Stop</button>
-    <button class="btn btn-ghost" id="btnFlip" onclick="flipCamera()" style="display:none">🔄 Flip</button>
+    <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
+    <button class="btn btn-ghost"   id="btnFlip"  onclick="flipCamera()" style="display:none">🔄 Flip</button>
   </div>
   <div class="search-row">
     <input class="search-input" id="manualBarcode" type="text" inputmode="numeric"
-           placeholder="Or type barcode / name…" onkeydown="if(event.key==='Enter')manualSearch()" />
+           placeholder="Or type barcode / name…"
+           onkeydown="if(event.key==='Enter')manualSearch()" />
     <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
   <div id="resultArea"></div>
 </div>
 
-<!-- SEARCH PAGE -->
+<!-- ══ BROWSE PAGE ════════════════════════════════════════════ -->
 <div id="page-search" class="page">
   <div class="page-title">Browse Products</div>
   <div class="search-row" style="padding-top:0">
-    <input class="search-input" id="browseInput" type="text" placeholder="Search by name or barcode…"
-           oninput="renderBrowse()" />
+    <input class="search-input" id="browseInput" type="text"
+           placeholder="Search by name or barcode…" oninput="renderBrowse()" />
   </div>
   <div id="browseList" class="product-list"></div>
 </div>
 
-<!-- SETTINGS PAGE -->
+<!-- ══ SETTINGS PAGE ══════════════════════════════════════════ -->
 <div id="page-settings" class="page">
-  <div class="page-title">Settings</div>
 
-  <div class="settings-group">
-    <div class="settings-header">📦 Data Source (CSV)</div>
-    <div class="settings-row">
-      <label>GitHub Username</label>
-      <input id="cfgUser" type="text" placeholder="e.g. yourusername" />
+  <!-- LOCK SCREEN -->
+  <div id="settingsLock">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Settings Locked</div>
+    <div class="lock-sub">Enter your PIN to access settings.<br>Default PIN: <strong>1234</strong></div>
+    <div id="lockPinWrap">
+      <input id="lockPin" type="password" inputmode="numeric" maxlength="8"
+             placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" />
+      <button class="btn btn-primary" onclick="unlockSettings()">Unlock</button>
     </div>
-    <div class="settings-row">
-      <label>Repository Name</label>
-      <input id="cfgRepo" type="text" placeholder="e.g. price-checker" />
-    </div>
-    <div class="settings-row">
-      <label>Branch</label>
-      <input id="cfgBranch" type="text" placeholder="main" />
-    </div>
-    <div class="settings-row">
-      <label>CSV File Path</label>
-      <input id="cfgPath" type="text" placeholder="data/products.csv" />
-    </div>
-    <div class="settings-note">
-      CSV URL will be:<br>
-      <code style="color:var(--accent);font-size:0.78rem;word-break:break-all;" id="previewUrl">—</code>
-    </div>
+    <div id="lockError"></div>
   </div>
 
-  <div class="save-btn-wrap">
-    <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Save &amp; Reload Data</button>
-  </div>
-
-  <div class="settings-group">
-    <div class="settings-header">📷 Camera</div>
-    <div class="settings-row">
-      <label>Preferred Camera</label>
-      <select id="camSelect" onchange="saveCamPref()">
-        <option value="environment">Back Camera (default)</option>
-        <option value="user">Front Camera</option>
-      </select>
+  <!-- SETTINGS CONTENT -->
+  <div id="settingsContent">
+    <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:1.1rem;font-weight:800;">Settings</div>
+      <button class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem;" onclick="lockSettings()">🔒 Lock</button>
     </div>
-  </div>
 
-  <div class="settings-group">
-    <div class="settings-header">💱 Display</div>
-    <div class="settings-row">
-      <label>Currency Symbol</label>
-      <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
+    <!-- DATA SOURCE -->
+    <div class="settings-group">
+      <div class="settings-header">📦 Data Source (GitHub CSV)</div>
+      <div class="settings-row">
+        <label>GitHub Username</label>
+        <input id="cfgUser" type="text" placeholder="e.g. yourusername" autocomplete="off" />
+      </div>
+      <div class="settings-row">
+        <label>Repository Name</label>
+        <input id="cfgRepo" type="text" placeholder="e.g. price-checker" autocomplete="off" />
+      </div>
+      <div class="settings-row">
+        <label>Branch</label>
+        <input id="cfgBranch" type="text" placeholder="main" autocomplete="off" />
+      </div>
+      <div class="settings-row">
+        <label>CSV File Path</label>
+        <input id="cfgPath" type="text" placeholder="data/products.csv" autocomplete="off" />
+      </div>
+      <div class="settings-note">
+        CSV URL preview:<br>
+        <code style="color:var(--accent);font-size:0.77rem;word-break:break-all;" id="previewUrl">—</code>
+      </div>
     </div>
-    <div class="settings-row">
-      <label>Store Name (shown in header)</label>
-      <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
+    <div class="save-btn-wrap">
+      <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Save &amp; Reload Data</button>
     </div>
-  </div>
 
-  <div class="save-btn-wrap" style="padding-top:0">
-    <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
-  </div>
-
-  <div class="settings-group">
-    <div class="settings-header">ℹ️ About</div>
-    <div class="settings-note" style="padding-top:12px">
-      <strong>Folder structure on your GitHub repo:</strong><br><br>
-      📁 your-repo/<br>
-      &nbsp;&nbsp;📄 index.html<br>
-      &nbsp;&nbsp;📄 manifest.json<br>
-      &nbsp;&nbsp;📁 data/<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;📄 products.csv  ← upload updated CSV here<br><br>
-      Enable GitHub Pages under <em>Settings → Pages → Deploy from branch (main)</em>.
+    <!-- CAMERA -->
+    <div class="settings-group">
+      <div class="settings-header">📷 Camera</div>
+      <div class="settings-row">
+        <label>Preferred Camera</label>
+        <select id="camSelect" onchange="saveCamPref()">
+          <option value="environment">Back Camera (default)</option>
+          <option value="user">Front Camera</option>
+        </select>
+      </div>
     </div>
-  </div>
+
+    <!-- DISPLAY -->
+    <div class="settings-group">
+      <div class="settings-header">💱 Display</div>
+      <div class="settings-row">
+        <label>Currency Symbol</label>
+        <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
+      </div>
+      <div class="settings-row">
+        <label>Store Name</label>
+        <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
+      </div>
+    </div>
+    <div class="save-btn-wrap" style="padding-top:0">
+      <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="settings-group">
+      <div class="settings-header">🔐 Security</div>
+      <div class="settings-note" style="padding-top:12px;">
+        Change the PIN required to open Settings.<br>
+        Default is <strong>1234</strong> — update it after first setup.
+      </div>
+      <div style="padding:0 16px 14px;">
+        <button class="btn btn-warn btn-full" onclick="openChangePinModal()">🔑 Change PIN</button>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="settings-group">
+      <div class="settings-header">ℹ️ GitHub Folder Structure</div>
+      <div class="settings-note" style="padding-top:10px;">
+        📁 your-repo/<br>
+        &nbsp;&nbsp;📄 index.html<br>
+        &nbsp;&nbsp;📄 manifest.json<br>
+        &nbsp;&nbsp;📁 data/<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
+        Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
+      </div>
+    </div>
+    <div style="height:10px;"></div>
+  </div><!-- /settingsContent -->
 </div>
 
-<!-- BOTTOM TAB BAR -->
+<!-- ══ BOTTOM TAB BAR ═════════════════════════════════════════ -->
 <nav class="tabbar">
-  <button class="tab active" id="tab-scan" onclick="showTab('scan')">
+  <button class="tab active" id="tab-scan"     onclick="showTab('scan')">
     <span class="tab-icon">📷</span>Scan
   </button>
-  <button class="tab" id="tab-search" onclick="showTab('search')">
+  <button class="tab"        id="tab-search"   onclick="showTab('search')">
     <span class="tab-icon">🔍</span>Browse
   </button>
-  <button class="tab" id="tab-settings" onclick="showTab('settings')">
+  <button class="tab"        id="tab-settings" onclick="goSettings()">
     <span class="tab-icon">⚙️</span>Settings
   </button>
 </nav>
 
+<!-- ══ CHANGE PIN MODAL ═══════════════════════════════════════ -->
+<div id="pinModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>🔑 Change PIN</h3>
+    <input id="pinCurrent" type="password" inputmode="numeric" placeholder="Current PIN" maxlength="8" />
+    <input id="pinNew"     type="password" inputmode="numeric" placeholder="New PIN (4–8 digits)" maxlength="8" />
+    <input id="pinConfirm" type="password" inputmode="numeric" placeholder="Confirm New PIN" maxlength="8" />
+    <div class="modal-error" id="pinModalError"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-full" onclick="closePinModal()">Cancel</button>
+      <button class="btn btn-primary btn-full" onclick="savePin()">Save PIN</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
-// ─── STATE ───────────────────────────────────────────────────
-let products = [];
-let codeReader = null;
-let scanning   = false;
-let cameras    = [];
-let camIdx     = 0;
-
-const DEFAULT_SETTINGS = {
-  user:     '',
-  repo:     'price-checker',
-  branch:   'main',
-  path:     'data/products.csv',
-  currency: '₱',
-  storeName:'PriceCheck',
-  camFacing:'environment'
+// ─── STORAGE ─────────────────────────────────────────────────
+const DEFAULT = {
+  user:'', repo:'price-checker', branch:'main', path:'data/products.csv',
+  currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
 };
-
 function getSettings() {
-  try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('pcSettings') || '{}') }; }
-  catch { return { ...DEFAULT_SETTINGS }; }
+  try { return { ...DEFAULT, ...JSON.parse(localStorage.getItem('pcSettings')||'{}') }; }
+  catch { return { ...DEFAULT }; }
 }
 function setSettings(obj) {
   localStorage.setItem('pcSettings', JSON.stringify({ ...getSettings(), ...obj }));
 }
 
+// ─── STATE ───────────────────────────────────────────────────
+let products = [];
+let html5Qr  = null;
+let cameras  = [];
+let camIdx   = 0;
+let scanning = false;
+
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  loadSettingsUI();
-  loadCSV();
   applyDisplaySettings();
+  loadCSV();
 });
 
 function applyDisplaySettings() {
   const s = getSettings();
   document.title = s.storeName || 'PriceCheck';
-  document.querySelector('.logo').innerHTML =
-    `${escHtml(s.storeName || 'Price')}<span>Check</span>`;
+  document.getElementById('logoText').innerHTML =
+    escHtml(s.storeName||'Price') + '<span>Check</span>';
 }
 
-// ─── TAB SWITCHING ───────────────────────────────────────────
+// ─── TABS ────────────────────────────────────────────────────
 function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'search') renderBrowse();
-  if (name === 'settings') refreshPreviewUrl();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='search') renderBrowse();
 }
 
-// ─── CSV LOADING ─────────────────────────────────────────────
-async function loadCSV(showFeedback = false) {
+function goSettings() {
+  showTab('settings');
+  document.getElementById('settingsLock').style.display    = 'flex';
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('lockPin').value = '';
+  document.getElementById('lockError').textContent = '';
+}
+
+// ─── LOCK ────────────────────────────────────────────────────
+function unlockSettings() {
+  const entered = document.getElementById('lockPin').value.trim();
+  const correct = getSettings().pin || '1234';
+  if (entered === correct) {
+    document.getElementById('settingsLock').style.display    = 'none';
+    document.getElementById('settingsContent').style.display = 'flex';
+    loadSettingsUI();
+  } else {
+    document.getElementById('lockError').textContent = '❌ Wrong PIN. Try again.';
+    document.getElementById('lockPin').value = '';
+    // shake effect
+    const el = document.getElementById('lockPin');
+    el.style.borderColor = 'var(--danger)';
+    setTimeout(()=>{ el.style.borderColor=''; }, 1000);
+  }
+}
+
+function lockSettings() {
+  document.getElementById('settingsLock').style.display    = 'flex';
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('lockPin').value = '';
+  document.getElementById('lockError').textContent = '';
+}
+
+// ─── CHANGE PIN MODAL ────────────────────────────────────────
+function openChangePinModal() {
+  ['pinCurrent','pinNew','pinConfirm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pinModalError').textContent = '';
+  document.getElementById('pinModal').classList.add('open');
+}
+function closePinModal() {
+  document.getElementById('pinModal').classList.remove('open');
+}
+function savePin() {
+  const s       = getSettings();
+  const current = document.getElementById('pinCurrent').value.trim();
+  const nw      = document.getElementById('pinNew').value.trim();
+  const confirm = document.getElementById('pinConfirm').value.trim();
+  const errEl   = document.getElementById('pinModalError');
+  if (current !== s.pin)   { errEl.textContent='❌ Current PIN is incorrect.'; return; }
+  if (nw.length < 4)       { errEl.textContent='❌ New PIN must be at least 4 digits.'; return; }
+  if (!/^\d+$/.test(nw))   { errEl.textContent='❌ PIN must be numbers only.'; return; }
+  if (nw !== confirm)      { errEl.textContent='❌ PINs do not match.'; return; }
+  setSettings({ pin: nw });
+  closePinModal();
+  toast('✅ PIN changed successfully');
+}
+
+// ─── CSV ─────────────────────────────────────────────────────
+async function loadCSV(showFeedback=false) {
   const s   = getSettings();
   const url = buildCsvUrl(s);
-
   updateDbBadge(null);
   try {
-    const res  = await fetch(url + '?nocache=' + Date.now());
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const res = await fetch(url+'?nc='+Date.now());
+    if (!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     products = parseCSV(text);
     updateDbBadge(true, products.length);
-    if (showFeedback) toast(`✅ Loaded ${products.length} products`);
-  } catch (e) {
+    if (showFeedback) toast('✅ Loaded '+products.length+' products');
+  } catch(e) {
     updateDbBadge(false, 0);
-    if (showFeedback) toast('❌ Could not load CSV: ' + e.message);
+    if (showFeedback) toast('❌ Could not load CSV: '+e.message);
   }
 }
 
 function buildCsvUrl(s) {
   if (!s.user) return './data/products.csv';
-  return `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}`;
+  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
 }
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  // detect delimiter: tab or comma
   const delim = lines[0].includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(delim).map(h => h.trim().toLowerCase());
-
-  return lines.slice(1).map(line => {
-    const cols = line.split(delim);
-    const obj  = {};
-    headers.forEach((h, i) => obj[h] = (cols[i] || '').trim());
+  const headers = lines[0].split(delim).map(h=>h.trim().toLowerCase());
+  return lines.slice(1).map(line=>{
+    const cols=line.split(delim); const obj={};
+    headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
     return obj;
-  }).filter(r => r.citem);
+  }).filter(r=>r.citem);
 }
 
 function updateDbBadge(ok, count) {
   const el = document.getElementById('dbStatusBadge');
-  if (ok === null) {
-    el.className = 'status-badge err'; el.innerHTML = '<div class="dot"></div>Loading…';
-  } else if (ok) {
-    el.className = 'status-badge ok';
-    el.innerHTML = `<div class="dot"></div>${count} items`;
-  } else {
-    el.className = 'status-badge err'; el.innerHTML = '<div class="dot"></div>No Data';
-  }
+  if (ok===null) { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>Loading…'; }
+  else if (ok)   { el.className='status-badge ok';  el.innerHTML='<div class="dot"></div>'+count+' items'; }
+  else           { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>No Data'; }
 }
 
 // ─── SETTINGS UI ─────────────────────────────────────────────
 function loadSettingsUI() {
   const s = getSettings();
-  document.getElementById('cfgUser').value     = s.user     || '';
-  document.getElementById('cfgRepo').value     = s.repo     || 'price-checker';
-  document.getElementById('cfgBranch').value   = s.branch   || 'main';
-  document.getElementById('cfgPath').value     = s.path     || 'data/products.csv';
-  document.getElementById('cfgCurrency').value = s.currency || '₱';
-  document.getElementById('cfgStoreName').value= s.storeName|| 'PriceCheck';
-  document.getElementById('camSelect').value   = s.camFacing|| 'environment';
-
-  ['cfgUser','cfgRepo','cfgBranch','cfgPath'].forEach(id => {
-    document.getElementById(id).addEventListener('input', refreshPreviewUrl);
+  document.getElementById('cfgUser').value      = s.user      || '';
+  document.getElementById('cfgRepo').value      = s.repo      || 'price-checker';
+  document.getElementById('cfgBranch').value    = s.branch    || 'main';
+  document.getElementById('cfgPath').value      = s.path      || 'data/products.csv';
+  document.getElementById('cfgCurrency').value  = s.currency  || '₱';
+  document.getElementById('cfgStoreName').value = s.storeName || 'PriceCheck';
+  document.getElementById('camSelect').value    = s.camFacing || 'environment';
+  ['cfgUser','cfgRepo','cfgBranch','cfgPath'].forEach(id=>{
+    document.getElementById(id).oninput = refreshPreviewUrl;
   });
   refreshPreviewUrl();
 }
@@ -645,9 +629,9 @@ function loadSettingsUI() {
 function refreshPreviewUrl() {
   const s = {
     user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim() || 'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim() || 'main',
-    path:  document.getElementById('cfgPath').value.trim()  || 'data/products.csv',
+    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
+    branch:document.getElementById('cfgBranch').value.trim()||'main',
+    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
   };
   document.getElementById('previewUrl').textContent = buildCsvUrl(s);
 }
@@ -655,17 +639,17 @@ function refreshPreviewUrl() {
 function saveSettings() {
   setSettings({
     user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim() || 'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim() || 'main',
-    path:  document.getElementById('cfgPath').value.trim()  || 'data/products.csv',
+    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
+    branch:document.getElementById('cfgBranch').value.trim()||'main',
+    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
   });
   loadCSV(true);
 }
 
 function saveDisplay() {
   setSettings({
-    currency: document.getElementById('cfgCurrency').value.trim() || '₱',
-    storeName:document.getElementById('cfgStoreName').value.trim() || 'PriceCheck',
+    currency: document.getElementById('cfgCurrency').value.trim()||'₱',
+    storeName:document.getElementById('cfgStoreName').value.trim()||'PriceCheck',
   });
   applyDisplaySettings();
   toast('✅ Display settings saved');
@@ -675,75 +659,86 @@ function saveCamPref() {
   setSettings({ camFacing: document.getElementById('camSelect').value });
 }
 
-// ─── BARCODE SCANNER ─────────────────────────────────────────
+// ─── SCANNER (html5-qrcode — works on Android Chrome) ────────
 async function startScan() {
-  if (!window.ZXing) { toast('❌ ZXing library not loaded'); return; }
-  codeReader = new ZXing.BrowserMultiFormatReader();
-
+  if (scanning) return;
+  setScanStatus('Requesting camera…', 'active-scan');
   try {
-    cameras = await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
-    if (!cameras.length) throw new Error('No camera found');
+    // Request permission first so getCameras works on Android
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    stream.getTracks().forEach(t=>t.stop());
 
-    // prefer back camera
+    cameras = await Html5Qrcode.getCameras();
+    if (!cameras || cameras.length===0) throw new Error('No camera found on this device');
+
+    // Pick back camera by label, or last index (usually back on Android)
     const facing = getSettings().camFacing || 'environment';
-    camIdx = cameras.findIndex(c => c.label.toLowerCase().includes(
-      facing === 'environment' ? 'back' : 'front'));
-    if (camIdx < 0) camIdx = 0;
+    camIdx = cameras.findIndex(c=>c.label.toLowerCase().includes(
+      facing==='environment' ? 'back' : 'front'
+    ));
+    if (camIdx < 0) camIdx = facing==='environment' ? cameras.length-1 : 0;
 
-    setScanStatus('Scanning…', 'active-scan');
+    html5Qr = new Html5Qrcode('reader');
+    await html5Qr.start(
+      cameras[camIdx].id,
+      { fps:10, qrbox:{ width:220, height:150 } },
+      (decoded) => handleBarcode(decoded),
+      (_err) => { /* ignore per-frame decode fails */ }
+    );
+
+    scanning = true;
+    setScanStatus('Scanning — point at barcode', 'active-scan');
     document.getElementById('btnStart').style.display = 'none';
     document.getElementById('btnStop').style.display  = '';
     if (cameras.length > 1) document.getElementById('btnFlip').style.display = '';
 
-    await codeReader.decodeFromVideoDevice(
-      cameras[camIdx].deviceId,
-      document.getElementById('video'),
-      (result, err) => {
-        if (result) handleBarcode(result.getText());
-      }
-    );
-    scanning = true;
-  } catch (e) {
-    setScanStatus('Camera error: ' + e.message, 'error');
-    toast('❌ ' + e.message);
+  } catch(e) {
+    setScanStatus('Camera error: '+e.message, 'scan-error');
+    toast('❌ '+e.message);
   }
 }
 
-function stopScan() {
-  if (codeReader) { codeReader.reset(); codeReader = null; }
+async function stopScan() {
+  if (html5Qr && scanning) {
+    try { await html5Qr.stop(); html5Qr.clear(); } catch(_) {}
+    html5Qr = null;
+  }
   scanning = false;
+  setScanStatus('Camera stopped');
   document.getElementById('btnStart').style.display = '';
   document.getElementById('btnStop').style.display  = 'none';
   document.getElementById('btnFlip').style.display  = 'none';
-  setScanStatus('Camera stopped');
 }
 
 async function flipCamera() {
-  if (!cameras.length || !codeReader) return;
-  camIdx = (camIdx + 1) % cameras.length;
-  codeReader.reset();
-  await codeReader.decodeFromVideoDevice(
-    cameras[camIdx].deviceId,
-    document.getElementById('video'),
-    (result) => { if (result) handleBarcode(result.getText()); }
-  );
+  if (!cameras.length || !html5Qr || !scanning) return;
+  camIdx = (camIdx+1) % cameras.length;
+  try {
+    await html5Qr.stop();
+    await html5Qr.start(
+      cameras[camIdx].id,
+      { fps:10, qrbox:{ width:220, height:150 } },
+      (decoded) => handleBarcode(decoded),
+      () => {}
+    );
+    toast('📷 '+(cameras[camIdx].label||'Camera '+(camIdx+1)));
+  } catch(e) { toast('❌ Flip failed: '+e.message); }
 }
 
-function setScanStatus(msg, cls = '') {
+function setScanStatus(msg, cls='') {
   const el = document.getElementById('scanStatus');
   el.textContent = msg;
-  el.className   = 'scan-status ' + cls;
+  el.className   = 'scan-status '+cls;
 }
 
 // ─── LOOKUP ──────────────────────────────────────────────────
-let lastBarcode = '';
+let lastBarcode='';
 function handleBarcode(code) {
-  if (code === lastBarcode) return;
-  lastBarcode = code;
-  setTimeout(() => { lastBarcode = ''; }, 2500);
-
-  navigator.vibrate && navigator.vibrate(60);
-  setScanStatus('Found: ' + code, 'active-scan');
+  if (code===lastBarcode) return;
+  lastBarcode=code;
+  setTimeout(()=>{ lastBarcode=''; }, 2500);
+  navigator.vibrate && navigator.vibrate([60]);
+  setScanStatus('Scanned: '+code, 'active-scan');
   showResult(code);
 }
 
@@ -755,73 +750,60 @@ function manualSearch() {
 
 function showResult(query) {
   const q   = query.toLowerCase();
-  const hit = products.find(p =>
-    String(p.cupc) === q ||
-    String(p.sku)  === q ||
+  const hit = products.find(p=>
+    String(p.cupc)===q || String(p.sku)===q ||
     p.citem.toLowerCase().includes(q) ||
     (p.pos18 && p.pos18.toLowerCase().includes(q))
   );
-
-  const s   = getSettings();
-  const cur = s.currency || '₱';
+  const cur = getSettings().currency||'₱';
   const el  = document.getElementById('resultArea');
 
   if (!hit) {
-    el.innerHTML = `
+    el.innerHTML=`
       <div class="result-card not-found">
         <div class="result-label">❌ Not Found</div>
         <div class="result-name" style="color:var(--danger)">"${escHtml(query)}"</div>
         <div style="font-size:0.85rem;color:var(--muted);margin-top:6px">
-          No product matched this barcode or name.
-        </div>
+          No product matched this barcode or name.</div>
       </div>`;
     return;
   }
 
-  const price = parseFloat(hit.mprice) || 0;
-  el.innerHTML = `
+  const price = parseFloat(hit.mprice)||0;
+  el.innerHTML=`
     <div class="result-card found">
       <div class="result-label">✅ Product Found</div>
       <div class="result-name">${escHtml(hit.citem)}</div>
-      <div class="result-price">
-        <span class="peso">${cur}</span>${formatPrice(price)}
-      </div>
+      <div class="result-price"><span class="peso">${cur}</span>${formatPrice(price)}</div>
       <div class="result-meta">
-        ${hit.cupc && hit.cupc !== '0' ? `<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>` : ''}
+        ${hit.cupc&&hit.cupc!=='0'?`<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>`:''}
         <div class="tag">SKU: <strong>${escHtml(hit.sku)}</strong></div>
-        <div class="tag">UOM: <strong>${escHtml(hit.cuom)}</strong></div>
-        ${hit.pos18 ? `<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>` : ''}
+        <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
+        ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
       </div>
     </div>`;
 }
 
 // ─── BROWSE ──────────────────────────────────────────────────
 function renderBrowse() {
-  const q   = (document.getElementById('browseInput').value || '').toLowerCase();
-  const s   = getSettings();
-  const cur = s.currency || '₱';
-  const filtered = products.filter(p =>
-    !q ||
-    p.citem.toLowerCase().includes(q) ||
-    String(p.cupc).includes(q) ||
-    String(p.sku).includes(q) ||
-    (p.pos18 && p.pos18.toLowerCase().includes(q))
-  ).slice(0, 80);
+  const q   = (document.getElementById('browseInput').value||'').toLowerCase();
+  const cur = getSettings().currency||'₱';
+  const filtered = products.filter(p=>
+    !q || p.citem.toLowerCase().includes(q) ||
+    String(p.cupc).includes(q) || String(p.sku).includes(q) ||
+    (p.pos18&&p.pos18.toLowerCase().includes(q))
+  ).slice(0,100);
 
   const el = document.getElementById('browseList');
-  if (!filtered.length) {
-    el.innerHTML = `<div class="no-results">No products found</div>`;
-    return;
-  }
-  el.innerHTML = filtered.map(p => `
-    <div class="product-item" onclick="selectProduct('${escAttr(p.cupc || p.sku)}')">
-      <div>
+  if (!filtered.length) { el.innerHTML='<div class="no-results">No products found</div>'; return; }
+  el.innerHTML = filtered.map(p=>`
+    <div class="product-item" onclick="selectProduct('${escAttr(p.cupc&&p.cupc!=='0'?p.cupc:p.sku)}')">
+      <div style="min-width:0;flex:1">
         <div class="pname">${escHtml(p.citem)}</div>
-        <div class="pmeta">${p.cupc && p.cupc !== '0' ? 'Barcode: ' + p.cupc + ' · ' : ''}SKU: ${p.sku} · ${p.cuom}</div>
+        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${p.sku} · ${p.cuom}</div>
       </div>
       <div class="pprice">${cur}${formatPrice(parseFloat(p.mprice)||0)}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function selectProduct(code) {
@@ -836,16 +818,14 @@ function escHtml(s) {
 }
 function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
 function formatPrice(n) {
-  return n % 1 === 0 ? n.toLocaleString() : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return n%1===0 ? n.toLocaleString() : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 }
-
 let toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
 }
 </script>
 </body>
