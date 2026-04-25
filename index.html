@@ -226,7 +226,6 @@
   <div id="dbStatusBadge" class="status-badge err">
     <div class="dot"></div><span>No Data</span>
   </div>
-  <a class="icon-btn" href="settings.html" title="Settings">⚙️</a>
 </header>
 
 <!-- ══ SCAN PAGE ══════════════════════════════════════════════ -->
@@ -321,12 +320,12 @@ function showTab(name) {
 }
 
 // ─── CSV ─────────────────────────────────────────────────────
+const CSV_URL = 'https://raw.githubusercontent.com/unixpected/PRICE_CHECK/main/products.csv';
+
 async function loadCSV(showFeedback=false) {
-  const s   = getSettings();
-  const url = buildCsvUrl(s);
   updateDbBadge(null);
   try {
-    const res = await fetch(url+'?nc='+Date.now());
+    const res = await fetch(CSV_URL+'?nc='+Date.now());
     if (!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     products = parseCSV(text);
@@ -336,11 +335,6 @@ async function loadCSV(showFeedback=false) {
     updateDbBadge(false, 0);
     if (showFeedback) toast('❌ Could not load CSV: '+e.message);
   }
-}
-
-function buildCsvUrl(s) {
-  if (!s.user) return './data/products.csv';
-  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
 }
 
 function parseCSV(text) {
