@@ -105,8 +105,8 @@
       flex-shrink: 0;
     }
     /* hide html5-qrcode's own UI elements we don't want */
-    #reader img, #reader select, #reader button { display:none !important; }
-    #reader video { width:100% !important; object-fit:cover; }
+    #reader * { display:none !important; }
+    #reader video { display:block !important; width:100% !important; height:100% !important; object-fit:cover; }
 
     .scan-overlay-wrap { position: relative; width:100%; }
     .scan-overlay-frame {
@@ -241,6 +241,7 @@
     </div>
   </div>
   <div id="scanStatus" class="scan-status">Press Start to activate camera</div>
+  <div id="lastUpdated" style="text-align:center;font-size:0.75rem;color:var(--muted);padding:0 18px 8px;"></div>
   <div class="cam-controls">
     <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
     <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
@@ -301,6 +302,7 @@ let scanning = false;
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   applyDisplaySettings();
+  loadCachedCSV();
   loadCSV();
 });
 
@@ -330,12 +332,37 @@ async function loadCSV(showFeedback=false) {
     if (!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     products = parseCSV(text);
+    localStorage.setItem('pcCsvCache', text);
+    localStorage.setItem('pcCsvTimestamp', Date.now());
     updateDbBadge(true, products.length);
+    updateLastUpdated(Date.now());
     if (showFeedback) toast('✅ Loaded '+products.length+' products');
   } catch(e) {
-    updateDbBadge(false, 0);
-    if (showFeedback) toast('❌ Could not load CSV: '+e.message);
+    if (products.length === 0) {
+      updateDbBadge(false, 0);
+      if (showFeedback) toast('❌ Could not load CSV: '+e.message);
+    } else {
+      updateDbBadge(true, products.length);
+      if (showFeedback) toast('⚠️ Using offline data');
+    }
   }
+}
+
+function loadCachedCSV() {
+  const cached = localStorage.getItem('pcCsvCache');
+  const ts = localStorage.getItem('pcCsvTimestamp');
+  if (cached) {
+    products = parseCSV(cached);
+    updateDbBadge(true, products.length);
+    updateLastUpdated(ts);
+  }
+}
+
+function updateLastUpdated(ts) {
+  const el = document.getElementById('lastUpdated');
+  if (!ts) { el.textContent = ''; return; }
+  const d = new Date(Number(ts));
+  el.textContent = '📅 Updated ' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function parseCSV(text) {
