@@ -231,13 +231,13 @@
       left: 0;
       right: 0;
       bottom: calc(52px + env(safe-area-inset-bottom));
-      z-index: 99;
+      z-index: 120;
       text-align: center;
       font-size: 0.72rem;
       color: var(--accent);
-      font-weight: 500;
+      font-weight: 600;
       padding: 6px 10px;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.96);
       border-top: 1px solid var(--border);
       white-space: nowrap;
       overflow: hidden;
@@ -358,9 +358,16 @@ let flashOn  = false;
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   applyDisplaySettings();
+
+  // Always show a timestamp status immediately on first paint
+  const initialTs = localStorage.getItem('pcCsvTimestamp');
+  updateLastUpdated(initialTs);
+
   const hasCache = localStorage.getItem('pcCsvCache');
   if (hasCache) {
     loadCachedCSV();
+    // Still refresh from source in background to keep data/timestamp current
+    loadCSV(false);
   } else {
     loadCSV(false);
   }
