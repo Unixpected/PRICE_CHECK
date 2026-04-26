@@ -344,7 +344,12 @@ let flashOn  = false;
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   applyDisplaySettings();
-  loadCachedCSV();
+  const hasCache = localStorage.getItem('pcCsvCache');
+  if (hasCache) {
+    loadCachedCSV();
+  } else {
+    loadCSV(false);
+  }
 });
 
 function applyDisplaySettings() {
