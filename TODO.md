@@ -17,7 +17,9 @@
 - [x] 4. Update top timestamp copy to clearer “Last CSV update” wording
 - [x] 5. Fix loading badge color/state when progress reaches 100%
 - [x] 6. Improve timestamp visibility/fallback text at the top bar
-- [ ] 7. Test refresh flow and update task completion status
+- [ ] 7. Add `products_timestamp.txt` upload in `sync_sql_to_github.bat` only after CSV upload success
+- [ ] 8. Update `index.html` to read/display timestamp from `products_timestamp.txt` (with fallback)
+- [ ] 9. Full test: run script twice and verify CSV+TXT uploads and UI timestamp display
 
 ## Summary of Changes
 
