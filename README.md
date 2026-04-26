@@ -17,14 +17,13 @@ Go to [github.com](https://github.com) and sign up for free.
 - Click **Create repository**
 
 ### 3. Upload the Files
-Upload ALL these files/folders to your repo:
+Upload ALL these files to your repo:
 ```
 price-checker/
 ├── index.html         ← main app
 ├── manifest.json      ← PWA support
 ├── README.md          ← this file
-└── data/
-    └── products.csv   ← your product data
+└── products.csv       ← your product data
 ```
 
 > **Tip:** You can drag and drop files directly into GitHub in your browser.
@@ -48,7 +47,7 @@ price-checker/
 
 ## 📄 Updating Your Product CSV
 
-1. Go to your GitHub repo → `data/` folder
+1. Go to your GitHub repo
 2. Click `products.csv` → click the ✏️ pencil (edit) icon
 3. Paste your updated CSV content
 4. Click **Commit changes**
@@ -99,8 +98,7 @@ cupc	citem	mprice	sku	cuom	istdpk	pos18
 your-repo/
 ├── index.html
 ├── manifest.json
-└── data/
-    └── products.csv    ← update this file to refresh prices
+└── products.csv       ← update this file to refresh prices
 ```
 
-Keep your CSV in the `data/` folder and the path in Settings as `data/products.csv`.
+The CSV is read directly from the repo root. Set the path in Settings to `products.csv`.

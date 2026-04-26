@@ -198,7 +198,7 @@
     </div>
     <div class="settings-row">
       <label>CSV File Path</label>
-      <input id="cfgPath" type="text" placeholder="data/products.csv" autocomplete="off" />
+      <input id="cfgPath" type="text" placeholder="products.csv" autocomplete="off" />
     </div>
     <div class="settings-note">
       CSV URL preview:<br>
@@ -255,8 +255,7 @@
       📁 your-repo/<br>
       &nbsp;&nbsp;📄 index.html<br>
       &nbsp;&nbsp;📄 manifest.json<br>
-      &nbsp;&nbsp;📁 data/<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
+      &nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
       Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
     </div>
   </div>
@@ -352,7 +351,7 @@ function savePin() {
 
 // ─── CSV URL BUILDER ─────────────────────────────────────────
 function buildCsvUrl(s) {
-  if (!s.user) return './data/products.csv';
+  if (!s.user) return './products.csv';
   return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
 }
 
@@ -362,7 +361,7 @@ function loadSettingsUI() {
   document.getElementById('cfgUser').value      = s.user      || '';
   document.getElementById('cfgRepo').value      = s.repo      || 'price-checker';
   document.getElementById('cfgBranch').value    = s.branch    || 'main';
-  document.getElementById('cfgPath').value      = s.path      || 'data/products.csv';
+  document.getElementById('cfgPath').value      = s.path      || 'products.csv';
   document.getElementById('cfgCurrency').value  = s.currency  || '₱';
   document.getElementById('cfgStoreName').value = s.storeName || 'PriceCheck';
   document.getElementById('camSelect').value    = s.camFacing || 'environment';
@@ -377,7 +376,7 @@ function refreshPreviewUrl() {
     user:  document.getElementById('cfgUser').value.trim(),
     repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
     branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
+    path:  document.getElementById('cfgPath').value.trim()||'products.csv',
   };
   document.getElementById('previewUrl').textContent = buildCsvUrl(s);
 }
@@ -387,7 +386,7 @@ function saveSettings() {
     user:  document.getElementById('cfgUser').value.trim(),
     repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
     branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'data/products.csv',
+    path:  document.getElementById('cfgPath').value.trim()||'products.csv',
   });
   toast('✅ Data source saved. Reload the main app to fetch new data.');
 }

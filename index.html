@@ -344,9 +344,7 @@ let flashOn  = false;
 // ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   applyDisplaySettings();
-  updateLastUpdated(null); // Show "Checking…" immediately
   loadCachedCSV();
-  loadCSV();
 });
 
 function applyDisplaySettings() {
@@ -367,7 +365,7 @@ function showTab(name) {
 
 // ─── CSV ─────────────────────────────────────────────────────
 function buildCsvUrl(s) {
-  if (!s.user) return './data/products.csv';
+  if (!s.user) return './products.csv';
   return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
 }
 
@@ -474,12 +472,15 @@ function loadCachedCSV() {
     products = parseCSV(cached);
     updateDbBadge(true, products.length);
     updateLastUpdated(ts);
+  } else {
+    updateDbBadge(false, 0);
+    updateLastUpdated(null);
   }
 }
 
 function updateLastUpdated(ts) {
   const el = document.getElementById('lastUpdated');
-  if (!ts) { el.textContent = '📅 Checking…'; return; }
+  if (!ts) { el.textContent = ''; return; }
   const d = new Date(Number(ts));
   el.textContent = '📅 Updated ' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
