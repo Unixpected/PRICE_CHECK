@@ -400,6 +400,33 @@ async function loadCSV(showFeedback=false) {
     if (!res.ok) throw new Error('HTTP '+res.status);
     const headerTs = res.headers.get('last-modified');
     const rawTs = headerTs ? new Date(headerTs).getTime() : null;
+    const total = Number(res.headers.get('content-length')) || 0;
+
+    if (res.body && res.body.getReader) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let received = 0;
+      let text = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        text += decoder.decode(value, { stream: true });
+
+        if (total > 0) {
+          const pct = Math.min(100, Math.round((received / total) * 100));
+          updateDbBadge(null, 0, 'Loading ' + pct + '%');
+        } else {
+          const kb = Math.round(received / 1024);
+          updateDbBadge(null, 0, 'Loading ' + kb + ' KB');
+        }
+      }
+
+      text += decoder.decode();
+      return { text, rawTs };
+    }
+
     const text = await res.text();
     return { text, rawTs };
   }
@@ -487,7 +514,7 @@ function updateLastUpdated(ts) {
   const el = document.getElementById('lastUpdated');
   if (!ts) { el.textContent = ''; return; }
   const d = new Date(Number(ts));
-  el.textContent = '📅 Updated ' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  el.textContent = '📅 Last CSV update: ' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function parseCSV(text) {
@@ -502,9 +529,9 @@ function parseCSV(text) {
   }).filter(r=>r.citem);
 }
 
-function updateDbBadge(ok, count) {
+function updateDbBadge(ok, count, loadingText='Loading…') {
   const el = document.getElementById('dbStatusBadge');
-  if (ok===null) { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>Loading…'; }
+  if (ok===null) { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>'+escHtml(loadingText); }
   else if (ok)   { el.className='status-badge ok';  el.innerHTML='<div class="dot"></div>'+count+' items'; }
   else           { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>No Data'; }
 }

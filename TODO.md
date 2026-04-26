@@ -10,6 +10,13 @@
 - [x] 7. Update README.md folder structure
 - [x] 8. Test and verify
 
+## New Tasks (Progress + Timestamp UX)
+- [x] 1. Add CSV download progress tracking (percentage/bytes) in `index.html`
+- [x] 2. Update loading badge text to show live progress
+- [x] 3. Preserve fallback behavior when progress info is unavailable
+- [x] 4. Update top timestamp copy to clearer “Last CSV update” wording
+- [ ] 5. Test refresh flow and update task completion status
+
 ## Summary of Changes
 
 ### index.html
