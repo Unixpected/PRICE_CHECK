@@ -85,6 +85,7 @@
     }
     .status-badge.ok  { background:#052e16; color:var(--success); border:1px solid #166534; }
     .status-badge.err { background:#450a0a; color:var(--danger);  border:1px solid #991b1b; }
+    .status-badge.loading { background:#082f49; color:var(--accent); border:1px solid #0ea5e9; }
     .status-badge .dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
 
     /* ── BOTTOM TAB BAR ── */
@@ -512,8 +513,12 @@ function loadCachedCSV() {
 
 function updateLastUpdated(ts) {
   const el = document.getElementById('lastUpdated');
-  if (!ts) { el.textContent = ''; return; }
+  if (!ts) { el.textContent = '📅 Last CSV update: unavailable'; return; }
   const d = new Date(Number(ts));
+  if (Number.isNaN(d.getTime())) {
+    el.textContent = '📅 Last CSV update: unavailable';
+    return;
+  }
   el.textContent = '📅 Last CSV update: ' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
@@ -531,9 +536,9 @@ function parseCSV(text) {
 
 function updateDbBadge(ok, count, loadingText='Loading…') {
   const el = document.getElementById('dbStatusBadge');
-  if (ok===null) { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>'+escHtml(loadingText); }
-  else if (ok)   { el.className='status-badge ok';  el.innerHTML='<div class="dot"></div>'+count+' items'; }
-  else           { el.className='status-badge err'; el.innerHTML='<div class="dot"></div>No Data'; }
+  if (ok===null) { el.className='status-badge loading'; el.innerHTML='<div class="dot"></div>'+escHtml(loadingText); }
+  else if (ok)   { el.className='status-badge ok';      el.innerHTML='<div class="dot"></div>'+count+' items'; }
+  else           { el.className='status-badge err';     el.innerHTML='<div class="dot"></div>No Data'; }
 }
 
 // ─── SCANNER (html5-qrcode — works on Android Chrome) ────────

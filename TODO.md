@@ -15,7 +15,9 @@
 - [x] 2. Update loading badge text to show live progress
 - [x] 3. Preserve fallback behavior when progress info is unavailable
 - [x] 4. Update top timestamp copy to clearer “Last CSV update” wording
-- [ ] 5. Test refresh flow and update task completion status
+- [x] 5. Fix loading badge color/state when progress reaches 100%
+- [x] 6. Improve timestamp visibility/fallback text at the top bar
+- [ ] 7. Test refresh flow and update task completion status
 
 ## Summary of Changes
 
