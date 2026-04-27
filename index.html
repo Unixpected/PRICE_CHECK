@@ -493,21 +493,34 @@ async function loadCSV(showFeedback=false) {
 
   if (text) {
     products = parseCSV(text);
-    localStorage.setItem('pcCsvCache', text);
+    
+    // Cache only if small enough (avoid quota exceeded)
+    try {
+      localStorage.setItem('pcCsvCache', text);
+    } catch(e) {
+      console.warn('Cache quota exceeded - using online-only mode:', e);
+    }
 
     // Prefer the timestamp from the dedicated TXT file (most accurate)
     let txtTs = null;
     try { txtTs = await fetchTimestampFromTxt(); } catch(_) {}
 
-    const finalTs = txtTs || rawTs || Date.now();
-    localStorage.setItem('pcCsvTimestamp', raw);  // Store original ISO string
+    const finalTsStr = txtTs ? new Date(txtTs).toISOString() : (rawTs ? new Date(rawTs).toISOString() : null);
+    if (finalTsStr) {
+      try {
+        localStorage.setItem('pcCsvTimestamp', finalTsStr);
+      } catch(e) {
+        console.warn('Timestamp cache failed:', e);
+      }
+    }
 
     updateDbBadge(true, products.length);
-    updateLastUpdated(raw);  // Pass string, parse inside function
+    updateLastUpdated(finalTsStr);
 
     if (showFeedback) toast('✅ Loaded '+products.length+' products'+(source==='local'?' (local)':''));
     return;
   }
+
 
   const cachedTs = localStorage.getItem('pcCsvTimestamp');
   if (products.length === 0) {
