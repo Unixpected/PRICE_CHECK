@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.4.2/html5-qrcode.min.js"></script>
 
   <style>
     :root {
@@ -714,7 +714,7 @@ async function startScan() {
     html5Qr = new Html5Qrcode('reader');
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:10, qrbox:{ width:240, height:140 } },
+      { fps:20, qrbox:{ width:300, height:200 }, formatsToSupport: ["code_128", "ean_13", "ean_8", "code_39", "itf"], aspectTolerance: 1.5 },
       (decoded) => handleBarcode(decoded),
       (_err) => { /* ignore per-frame decode fails */ }
     );
@@ -779,7 +779,7 @@ async function flipCamera() {
     await html5Qr.stop();
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:10, qrbox:{ width:240, height:140 } },
+      { fps:20, qrbox:{ width:300, height:200 }, formatsToSupport: ["code_128", "ean_13", "ean_8", "code_39", "itf"], aspectTolerance: 1.5 },
       (decoded) => handleBarcode(decoded),
       () => {}
     );
@@ -798,9 +798,8 @@ let lastBarcode='';
 let scanCooldown = false;
 
 function handleBarcode(code) {
-  // Accept 13-digit (EAN-13) and 14-digit (ITF-14/GS1-14) numeric barcodes.
-  // Shorter codes are handled by manual search only.
-  if (!/^\d{13,14}$/.test(code)) return;
+  if (!/^\d{7,20}$/.test(code)) return;
+  console.log('Scanned barcode:', code, 'length:', code.length, '- trying normalization...');
   if (code === lastBarcode || scanCooldown) return;
   lastBarcode = code;
   scanCooldown = true;
