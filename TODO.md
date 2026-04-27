@@ -1,23 +1,20 @@
-# PRICE_CHECK Fixes Complete ✅
+# PriceCheck Timestamp Fix
 
-## All Errors Resolved
+## Task: Fix "📅 Last updated: —" → show actual date
 
-### Fixed:
-- **Html5Qrcode undefined / Scanner dead**: Pure Canvas 1D barcode decoder (EAN13/Code128) - offline, no CDN.
-- **QuotaExceeded (38MB CSV)**: Size check skips cache, uses online-only safely.
-- **Manifest icons 404**: Removed invalid refs (local clean).
-- Hosted site icons ignore (can't fix remote).
+**Status: 🔄 In Progress**
 
-### Test:
-1. Open `index.html`
-2. F12 → Console clean 
-3. "Start Camera" → Works PC/Android (HTTPS or localhost)
-4. Manual barcode works
-5. Browse/products load (online)
+### Steps:
+- [✅] 1. Create robust ISO parser in index.html
+- [✅] 2. Update fetchTimestampFromTxt() + updateLastUpdated()
+- [ ] 3. Test display shows "Apr 26, 2026 6:04 PM"
+- [ ] 4. Clear any bad localStorage cache
+- [ ] 5. ✅ Complete
 
-**Pure JS scanner detects retail barcodes from video frames. Manual fallback always works.**
+**Details:**
+- Root cause: Date.parse fails on 7-decimal ISO "2026-04-26T10:04:17.5561813Z"
+- Fix: Custom parser + simple YMDhms extraction fallback
+- Files: index.html (parsing/display logic)
 
-CLI demo: `start Live Server` or drag to Chrome.
-
-Files updated: index.html (scanner), manifest.json, TODO.md tracked.
+**Next:** Step 1 → Edit index.html
 

@@ -10,10 +10,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
-    /* Exact original styles from working zip */
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
@@ -41,6 +40,7 @@
       overflow-x: hidden;
     }
 
+    /* ── TOP NAV ── */
     .topbar {
       display: flex;
       align-items: center;
@@ -57,6 +57,7 @@
     }
     .topbar .logo span { color: var(--text); }
 
+    /* badge */
     .status-badge {
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
@@ -67,6 +68,7 @@
     .status-badge.loading { background:#082f49; color:var(--accent); border:1px solid #0ea5e9; }
     .status-badge .dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
 
+    /* ── BOTTOM TAB BAR ── */
     .tabbar {
       display: flex; background: var(--surface);
       border-top: 1px solid var(--border);
@@ -83,17 +85,20 @@
     .tab .tab-icon { font-size: 1.3rem; }
     .tab.active { color: var(--accent); }
 
+    /* ── PAGES ── */
     .page { display:none; flex:1; flex-direction:column; padding-bottom:80px; overflow-y:auto; }
     .page.active { display:flex; }
     #page-scan { overflow:hidden; padding-bottom:0; }
     #page-search { overflow-y:auto; }
 
+    /* ── SCAN PAGE ── */
     #reader {
       width: 100%; height: 200px; background: #000;
       overflow: hidden;
       position: relative;
       flex-shrink: 0;
     }
+    /* hide html5-qrcode's own UI elements we don't want */
     #reader * { display:none !important; }
     #reader video { display:block !important; width:100% !important; height:100% !important; object-fit:cover; }
 
@@ -109,19 +114,19 @@
       content:''; position:absolute; width:22px; height:22px;
       border-color:var(--accent); border-style:solid;
     }
-    .scan-frame::before { top:0; left:0; border-width:3px 0 0 3px; }
-    .scan-frame::after { top:0; right:0; border-width:3px 3px 0 0; }
-    .scan-frame .cbr { bottom:0; right:0; border-width:0 3px 3px 0; }
-    .scan-frame .cbl { bottom:0; left:0; border-width:0 0 3px 3px; }
+    .scan-frame::before { top:0; left:0;    border-width:3px 0 0 3px; }
+    .scan-frame::after  { top:0; right:0;   border-width:3px 3px 0 0; }
+    .scan-frame .cbr    { bottom:0; right:0; border-width:0 3px 3px 0; }
+    .scan-frame .cbl    { bottom:0; left:0;  border-width:0 0 3px 3px; }
     .scan-line {
       position:absolute; left:10%; right:10%; height:2px;
       background:linear-gradient(90deg,transparent,var(--accent),transparent);
       animation:scanline 2s ease-in-out infinite; border-radius:2px;
     }
     @keyframes scanline {
-      0% { top:12%; opacity:0; }
-      10% { opacity:1; }
-      90% { opacity:1; }
+      0%   { top:12%; opacity:0; }
+      10%  { opacity:1; }
+      90%  { opacity:1; }
       100% { top:88%; opacity:0; }
     }
 
@@ -130,9 +135,12 @@
       font-size:0.8rem; color:var(--muted);
     }
     .scan-status.active-scan { color:var(--accent); }
-    .scan-status.scan-error { color:var(--danger); }
+    .scan-status.scan-error  { color:var(--danger); }
 
-    .cam-controls { display:flex; gap:8px; padding:4px 18px 6px; justify-content:center; flex-wrap:wrap; }
+    .cam-controls {
+      display:flex; gap:8px; padding:4px 18px 6px;
+      justify-content:center; flex-wrap:wrap;
+    }
     .btn {
       border:none; border-radius:var(--radius-sm);
       padding:10px 20px; font-size:0.9rem; font-weight:700;
@@ -141,9 +149,13 @@
     }
     .btn:active { transform:scale(0.96); opacity:0.8; }
     .btn-primary { background:var(--accent); color:#0f172a; }
-    .btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
-    .btn-full { width:100%; justify-content:center; }
-    .search-row { display:flex; gap:10px; padding:8px 18px; align-items:center; }
+    .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-full    { width:100%; justify-content:center; }
+    .btn-warn    { background:#92400e; color:#fef3c7; border:1px solid #b45309; }
+
+    .search-row {
+      display:flex; gap:10px; padding:8px 18px; align-items:center;
+    }
     .search-input {
       flex:1; background:var(--surface2); border:1px solid var(--border);
       border-radius:var(--radius-sm); color:var(--text); font-size:1rem;
@@ -152,6 +164,40 @@
     .search-input:focus { border-color:var(--accent); }
     .search-input::placeholder { color:var(--muted); }
 
+    /* scan page compact overrides */
+    #page-scan .search-row { padding:4px 18px; }
+    #page-scan .search-input { padding:8px 12px; font-size:0.95rem; }
+    #page-scan .btn { padding:8px 16px; font-size:0.85rem; }
+
+    /* ── RESULT CARD ── */
+    .result-card {
+      margin:6px 18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px; animation:fadeUp 0.25s ease;
+    }
+    #page-scan .result-card { margin:4px 12px; padding:12px; }
+    #page-scan .result-name { font-size:1rem; margin-bottom:8px; }
+    #page-scan .result-price { font-size:1.8rem; }
+    #page-scan .result-meta { margin-top:8px; gap:6px; }
+    #page-scan .tag { padding:3px 8px; font-size:0.7rem; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .result-card.not-found { border-color:var(--danger); }
+    .result-card.found     { border-color:var(--success); }
+    .result-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:4px; }
+    .result-name  { font-size:1.15rem; font-weight:800; margin-bottom:12px; line-height:1.3; }
+    .result-price { font-size:2.4rem; font-weight:900; color:var(--price); letter-spacing:-1px; margin-bottom:4px; }
+    .result-price .peso { font-size:1.4rem; vertical-align:super; }
+    .result-meta  { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .tag {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; padding:4px 10px; font-size:0.75rem; color:var(--muted);
+    }
+    .tag strong { color:var(--text); }
+
+    /* ── BROWSE PAGE ── */
     .page-title { font-size:1.2rem; font-weight:800; padding:16px 18px 8px; }
     .product-list { padding:0 18px; display:flex; flex-direction:column; gap:8px; }
     .product-item {
@@ -166,25 +212,40 @@
     .pprice { font-size:1.1rem; font-weight:800; color:var(--price); white-space:nowrap; padding-left:10px; }
     .no-results { text-align:center; color:var(--muted); padding:40px 18px; font-size:0.95rem; }
 
+    /* ── BOTTOM TIMESTAMP ── */
     .bottom-timestamp {
-      position: fixed; left: 0; right: 0; bottom: calc(52px + env(safe-area-inset-bottom));
-      z-index: 120; text-align: center; font-size: 0.72rem; color: var(--accent);
-      font-weight: 600; padding: 4px 10px; background: rgba(15, 23, 42, 0.97);
-      border-top: 1px solid var(--border); white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; pointer-events: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(52px + env(safe-area-inset-bottom));
+      z-index: 120;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 600;
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.97);
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
     }
 
+    /* ── TOAST ── */
     #toast {
       position:fixed; bottom:130px; left:50%; transform:translateX(-50%);
       background:var(--surface2); border:1px solid var(--border); color:var(--text);
       padding:10px 20px; border-radius:30px; font-size:0.85rem; font-weight:600;
-      opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; z-index:999;
+      opacity:0; transition:opacity 0.3s; pointer-events:none;
+      white-space:nowrap; z-index:999;
     }
     #toast.show { opacity:1; }
   </style>
 </head>
 <body>
 
+<!-- TOP BAR -->
 <header class="topbar">
   <div class="logo" id="logoText">Price<span>Check</span></div>
   <div id="dbStatusBadge" class="status-badge err">
@@ -192,12 +253,10 @@
   </div>
 </header>
 
+<!-- ══ SCAN PAGE ══════════════════════════════════════════════ -->
 <div id="page-scan" class="page active">
   <div class="scan-overlay-wrap">
-    <div id="reader">
-      <video id="video" autoplay playsinline muted style="display:none;"></video>
-      <canvas id="canvas" style="display:none;"></canvas>
-    </div>
+    <div id="reader"></div>
     <div class="scan-overlay-frame">
       <div class="scan-frame">
         <div class="cbr"></div><div class="cbl"></div>
@@ -205,15 +264,17 @@
       </div>
     </div>
   </div>
-  <div id="scanStatus" class="scan-status">Press Start to activate camera (Pure JS Scanner)</div>
+  <div id="scanStatus" class="scan-status">Press Start to activate camera</div>
   <div class="cam-controls">
     <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
-    <button class="btn btn-ghost" id="btnStop" onclick="stopScan()" style="display:none">⏹ Stop</button>
-    <button class="btn btn-ghost" id="btnFlip" onclick="flipCamera()" style="display:none">🔄 Flip</button>
+    <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
+    <button class="btn btn-ghost"   id="btnFlip"  onclick="flipCamera()" style="display:none">🔄 Flip</button>
+    <button class="btn btn-ghost"   id="btnFlash" onclick="toggleFlash()"  style="display:none">🔦 Flash</button>
   </div>
   <div class="search-row">
     <input class="search-input" id="manualBarcode" type="text" inputmode="numeric"
-           placeholder="Or type barcode / name…" onkeydown="if(event.key==='Enter')manualSearch()" />
+           placeholder="Or type barcode / name…"
+           onkeydown="if(event.key==='Enter')manualSearch()" />
     <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
   <div id="resultArea"></div>
@@ -222,6 +283,7 @@
   </div>
 </div>
 
+<!-- ══ BROWSE PAGE ════════════════════════════════════════════ -->
 <div id="page-search" class="page">
   <div class="page-title">Browse Products</div>
   <div class="search-row" style="padding-top:0">
@@ -231,11 +293,12 @@
   <div id="browseList" class="product-list"></div>
 </div>
 
+<!-- ══ BOTTOM TAB BAR ═════════════════════════════════════════ -->
 <nav class="tabbar">
-  <button class="tab active" id="tab-scan" onclick="showTab('scan')">
+  <button class="tab active" id="tab-scan"     onclick="showTab('scan')">
     <span class="tab-icon">📷</span>Scan
   </button>
-  <button class="tab" id="tab-search" onclick="showTab('search')">
+  <button class="tab"        id="tab-search"   onclick="showTab('search')">
     <span class="tab-icon">🔍</span>Browse
   </button>
 </nav>
@@ -244,54 +307,61 @@
 <div id="toast"></div>
 
 <script>
-/* COMPLETE WORKING ORIGINAL + MINIMAL FIXES */
+// ─── STORAGE ─────────────────────────────────────────────────
 const DEFAULT = {
   user:'unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv',
   currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
 };
-
 function getSettings() {
   try {
     const stored = JSON.parse(localStorage.getItem('pcSettings')||'{}');
     return {
       ...DEFAULT,
       ...stored,
-      user: stored.user || DEFAULT.user,
-      repo: stored.repo || DEFAULT.repo,
+      user:   stored.user   || DEFAULT.user,
+      repo:   stored.repo   || DEFAULT.repo,
       branch: stored.branch || DEFAULT.branch,
-      path: stored.path || DEFAULT.path
+      path:   stored.path   || DEFAULT.path,
     };
-  } catch { return DEFAULT; }
+  }
+  catch { return { ...DEFAULT }; }
+}
+function setSettings(obj) {
+  localStorage.setItem('pcSettings', JSON.stringify({ ...getSettings(), ...obj }));
 }
 
-function setSettings(obj) {
-  localStorage.setItem('pcSettings', JSON.stringify({...getSettings(), ...obj}));
-}
+// ─── STATE ───────────────────────────────────────────────────
+let products = [];
+let html5Qr  = null;
+let cameras  = [];
+let camIdx   = 0;
+let scanning = false;
+let flashOn  = false;
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  applyDisplaySettings();
+
+  const initialTs = localStorage.getItem('pcCsvTimestamp');
+  updateLastUpdated(initialTs);
+
+  const hasCache = localStorage.getItem('pcCsvCache');
+  if (hasCache) {
+    loadCachedCSV();
+    loadCSV(false);
+  } else {
+    loadCSV(false);
+  }
+});
 
 function applyDisplaySettings() {
   const s = getSettings();
   document.title = s.storeName || 'PriceCheck';
-  document.getElementById('logoText').innerHTML = 
-    (s.storeName||'Price').replace(/[&<>"']/g, m=>`&#${m.charCodeAt(0)};`) + '<span>Check</span>';
+  document.getElementById('logoText').innerHTML =
+    escHtml(s.storeName||'Price') + '<span>Check</span>';
 }
 
-let products = [];
-let stream = null;
-let scanning = false;
-let camFacing = 'environment';
-let scanCanvas, scanCtx;
-let barcodeIndex = new Map();
-let lastBarcode = '';
-
-window.addEventListener('DOMContentLoaded', async () => {
-  applyDisplaySettings();
-  scanCanvas = document.getElementById('canvas');
-  scanCtx = scanCanvas.getContext('2d');
-  const initialTs = localStorage.getItem('pcCsvTimestamp');
-  updateLastUpdated(initialTs);
-  loadCSV(false);
-});
-
+// ─── TABS ────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -300,135 +370,555 @@ function showTab(name) {
   if (name==='search') renderBrowse();
 }
 
-// [loadCSV quota-safe, parseCSV, buildBarcodeIndex, normalizeScanned - SAME AS WORKING ZIP]
+// ─── CSV ─────────────────────────────────────────────────────
 function buildCsvUrl(s) {
-  return s.user ? `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}` : './products.csv';
+  if (!s.user) return './products.csv';
+  return `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}`;
 }
+
+// ─── ROBUST ISO PARSER (Fixes "--" timestamp) ─────────────────
+function parseIsoTimestamp(isoStr) {
+  // Strip BOM/whitespace
+  let raw = isoStr.replace(/^\uFEFF/, '').trim();
+  if (!raw) return null;
+
+  // Simple regex extract: YYYY-MM-DDTHH:MM:SS.sssZ (handles 3-9 decimals)
+  const simpleMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?(Z)?$/i);
+  if (simpleMatch) {
+    const [,y,m,d,h,mi,s,ms] = simpleMatch;
+    let msNum = 0;
+    if (ms) {
+      const frac = ms.slice(1);
+      msNum = Math.floor(parseFloat(frac) * 1000);
+    }
+    return Date.UTC(+y, +m-1, +d, +h, +mi, +s, msNum);
+  }
+
+
+  // Full Date constructor fallback (truncates decimals automatically)
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.getTime();
+
+  // Plain numeric fallback
+  const num = Number(raw);
+  if (!isNaN(num) && num > 0) return num;
+
+  console.warn('Failed to parse timestamp:', raw);
+  return null;
+}
+
+
+async function fetchTimestampFromTxt() {
+  const s = getSettings();
+  const base = s.user
+    ? `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/`
+    : './';
+  const tsUrl = base + 'products_timestamp.txt?nc=' + Date.now();
+  try {
+    const res = await fetch(tsUrl);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.text();
+    const cleanRaw = raw.replace(/^\uFEFF/, '').trim();
+    return parseIsoTimestamp(cleanRaw);
+  } catch (e) {
+    console.warn('Timestamp fetch failed:', e);
+    return null;
+  }
+}
+
 
 async function loadCSV(showFeedback=false) {
   updateDbBadge(null);
+
+  async function tryFetch(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const headerTs = res.headers.get('last-modified');
+    const rawTs = headerTs ? new Date(headerTs).getTime() : null;
+    const total = Number(res.headers.get('content-length')) || 0;
+
+    if (res.body && res.body.getReader) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let received = 0;
+      let text = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        text += decoder.decode(value, { stream: true });
+
+        if (total > 0) {
+          const pct = Math.min(100, Math.round((received / total) * 100));
+          updateDbBadge(null, 0, 'Loading ' + pct + '%');
+        } else {
+          const kb = Math.round(received / 1024);
+          updateDbBadge(null, 0, 'Loading ' + kb + ' KB');
+        }
+      }
+
+      text += decoder.decode();
+      return { text, rawTs };
+    }
+
+    const text = await res.text();
+    return { text, rawTs };
+  }
+
   let text = null;
-  
+  let rawTs = null;
+  let source = '';
+
   try {
-    text = await (await fetch(buildCsvUrl(getSettings()) + '?nc=' + Date.now())).text();
+    const remote = buildCsvUrl(getSettings()) + '?nc='+Date.now();
+    const result = await tryFetch(remote);
+    text = result.text;
+    rawTs = result.rawTs;
+    source = 'remote';
   } catch(e) {
-    console.warn('Remote failed:', e);
+    console.warn('Remote CSV failed:', e.message);
+  }
+
+  if (!text) {
     try {
-      text = await (await fetch('./products.csv')).text();
-    } catch(e2) {
-      console.warn('Local failed:', e2);
+      const result = await tryFetch('./products.csv');
+      text = result.text;
+      rawTs = result.rawTs;
+      source = 'local';
+    } catch(e) {
+      console.warn('Local CSV failed:', e.message);
     }
   }
 
   if (text) {
     products = parseCSV(text);
-    // QUOTA FIX: Only cache small files
-    if (text.length < 500000) {
+    
+    // Cache only if small enough (avoid quota exceeded)
+    try {
       localStorage.setItem('pcCsvCache', text);
+    } catch(e) {
+      console.warn('Cache quota exceeded - using online-only mode:', e);
     }
-    buildBarcodeIndex(products);
+
+    // Prefer the timestamp from the dedicated TXT file (most accurate)
+    let txtTs = null;
+    try { txtTs = await fetchTimestampFromTxt(); } catch(_) {}
+
+    const finalTsStr = txtTs ? new Date(txtTs).toISOString() : (rawTs ? new Date(rawTs).toISOString() : null);
+    if (finalTsStr) {
+      try {
+        localStorage.setItem('pcCsvTimestamp', finalTsStr);
+      } catch(e) {
+        console.warn('Timestamp cache failed:', e);
+      }
+    }
+
     updateDbBadge(true, products.length);
-    toast('✅ Loaded ' + products.length + ' products');
-  } else {
+    updateLastUpdated(finalTsStr);
+
+    if (showFeedback) toast('✅ Loaded '+products.length+' products'+(source==='local'?' (local)':''));
+    return;
+  }
+
+
+  const cachedTs = localStorage.getItem('pcCsvTimestamp');
+  if (products.length === 0) {
     const cached = localStorage.getItem('pcCsvCache');
     if (cached) {
       products = parseCSV(cached);
-      buildBarcodeIndex(products);
       updateDbBadge(true, products.length);
-      toast('⚠️ Cached data');
+      updateLastUpdated(cachedTs);
+      if (showFeedback) toast('⚠️ Using offline data');
+
     } else {
       updateDbBadge(false, 0);
-      toast('❌ No data');
+      updateLastUpdated(null);
+      if (showFeedback) toast('❌ Could not load CSV');
+    }
+  } else {
+    updateDbBadge(true, products.length);
+    updateLastUpdated(cachedTs);
+    if (showFeedback) toast('⚠️ Using offline data');
+  }
+}
+
+function loadCachedCSV() {
+  const cached = localStorage.getItem('pcCsvCache');
+  const ts = localStorage.getItem('pcCsvTimestamp');
+  if (cached) {
+    products = parseCSV(cached);
+    updateDbBadge(true, products.length);
+    updateLastUpdated(ts);
+  } else {
+    updateDbBadge(false, 0);
+    updateLastUpdated(null);
+  }
+}
+
+function updateLastUpdated(tsStr) {
+  const el = document.getElementById('lastUpdated');
+  if (!tsStr) {
+    el.textContent = '📅 Last updated: —';
+    return;
+  }
+
+  // Parse timestamp (robust)
+  const ts = parseIsoTimestamp(tsStr);
+  if (!ts || isNaN(ts)) {
+    console.warn('Invalid timestamp:', tsStr);
+    el.textContent = '📅 Last updated: —';
+    return;
+  }
+
+  // Format for PH locale
+  const d = new Date(ts);
+  el.textContent = '📅 Last updated: ' + d.toLocaleString('en-PH', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
+}
+
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+
+  // Parse header — strip BOM and quotes
+  const headers = lines[0].split(delim).map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, '').toLowerCase());
+
+  const parsed = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const cols = splitCSVLine(line, delim);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
+    if (obj.citem) parsed.push(obj);
+  }
+  buildBarcodeIndex(parsed);
+  return parsed;
+}
+
+// ─── BARCODE INDEX ───────────────────────────────────────────
+// Pre-built map of every normalized barcode form → product
+// so scanned codes are resolved in O(1) with no per-scan loops.
+let barcodeIndex = new Map();
+
+function buildBarcodeIndex(prods) {
+  barcodeIndex = new Map();
+  for (const p of prods) {
+    const cupc = String(p.cupc || '').trim();
+    const sku  = String(p.sku  || '').trim().replace(/\.00$/, '');
+
+    // Index by the raw cupc as stored in CSV
+    if (cupc && cupc !== '0') indexAdd(cupc, p);
+
+    // Index by SKU (fallback for items whose barcode encodes the internal SKU)
+    if (sku) indexAdd(sku, p);
+
+    // Derived forms so a scanned code always resolves regardless of encoding:
+    if (cupc.length === 7 || cupc.length <= 12) {
+      // Short internal codes: a scanner may output them zero-padded to 13.
+      // Index the zero-padded 13-digit form too.
+      const padded = cupc.padStart(13, '0');
+      indexAdd(padded, p);
+    }
+    if (cupc.length === 14) {
+      if (cupc[0] === '1') {
+        // ITF-14 / GS1-14: leading '1' is an indicator digit.
+        // Scanners often output the inner 13 digits.
+        indexAdd(cupc.slice(1), p);   // strip first digit → 13
+      } else {
+        // Other 14-digit: drop check/trailing digit → 13
+        indexAdd(cupc.slice(0, -1), p);
+      }
     }
   }
 }
 
-// Simple scanner - camera + manual works reliably
+function indexAdd(key, product) {
+  if (!barcodeIndex.has(key)) barcodeIndex.set(key, product);
+}
+
+// ─── BARCODE NORMALIZATION ───────────────────────────────────
+// Given a raw scanned code, return all candidate lookup keys in priority order.
+function normalizeScanned(code) {
+  const candidates = [code]; // always try exact first
+
+  if (code.length === 13) {
+    // Leading-zero-padded short code: strip leading zeros
+    // e.g. "0000004171560" → "4171560"
+    const stripped = code.replace(/^0+/, '') || '0';
+    if (stripped !== code) candidates.push(stripped);
+  }
+
+  if (code.length === 14) {
+    if (code[0] === '1') {
+      // ITF-14 with indicator digit: try inner 13
+      candidates.push(code.slice(1));
+    } else {
+      // Other 14-digit: try without last digit
+      candidates.push(code.slice(0, -1));
+    }
+  }
+
+  return candidates;
+}
+
+// Proper CSV parser that handles quoted fields
+function splitCSVLine(line, delim) {
+  const cols = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === delim && !inQuote) {
+      cols.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function updateDbBadge(ok, count, loadingText='Loading…') {
+  const el = document.getElementById('dbStatusBadge');
+  if (ok===null) { el.className='status-badge loading'; el.innerHTML='<div class="dot"></div>'+escHtml(loadingText); }
+  else if (ok)   { el.className='status-badge ok';      el.innerHTML='<div class="dot"></div>'+count+' items'; }
+  else           { el.className='status-badge err';     el.innerHTML='<div class="dot"></div>No Data'; }
+}
+
+// ─── SCANNER (html5-qrcode — works on Android Chrome) ────────
 async function startScan() {
+  if (scanning) return;
+  setScanStatus('Requesting camera…', 'active-scan');
   try {
-    stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
-    document.getElementById('video').srcObject = stream;
-    document.getElementById('video').style.display = 'block';
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    stream.getTracks().forEach(t=>t.stop());
+
+    cameras = await Html5Qrcode.getCameras();
+    if (!cameras || cameras.length===0) throw new Error('No camera found on this device');
+
+    const facing = getSettings().camFacing || 'environment';
+    camIdx = cameras.findIndex(c=>c.label.toLowerCase().includes(
+      facing==='environment' ? 'back' : 'front'
+    ));
+    if (camIdx < 0) camIdx = facing==='environment' ? cameras.length-1 : 0;
+
+    html5Qr = new Html5Qrcode('reader');
+    await html5Qr.start(
+      cameras[camIdx].id,
+      { fps:10, qrbox:{ width:240, height:140 } },
+      (decoded) => handleBarcode(decoded),
+      (_err) => { /* ignore per-frame decode fails */ }
+    );
+
     scanning = true;
-    scanLoop();
-    setScanStatus('Live camera - use manual search for barcodes');
+    flashOn = false;
+    setScanStatus('Scanning — point at barcode', 'active-scan');
     document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('btnStop').style.display = '';
+    document.getElementById('btnStop').style.display  = '';
+    if (cameras.length > 1) document.getElementById('btnFlip').style.display = '';
+    if (hasTorch()) document.getElementById('btnFlash').style.display = '';
+
   } catch(e) {
-    toast('Camera: ' + e.message);
+    setScanStatus('Camera error: '+e.message, 'scan-error');
+    toast('❌ '+e.message);
   }
 }
 
-function scanLoop() {
-  if (!scanning) return;
-  requestAnimationFrame(scanLoop);
+async function stopScan() {
+  if (html5Qr && scanning) {
+    try { await html5Qr.stop(); html5Qr.clear(); } catch(_) {}
+    html5Qr = null;
+  }
+  scanning = false;
+  flashOn = false;
+  setScanStatus('Camera stopped');
+  document.getElementById('btnStart').style.display = '';
+  document.getElementById('btnStop').style.display  = 'none';
+  document.getElementById('btnFlip').style.display  = 'none';
+  document.getElementById('btnFlash').style.display = 'none';
 }
 
-function stopScan() {
-  scanning = false;
-  if (stream) stream.getTracks().forEach(t=>t.stop());
-  document.getElementById('video').srcObject = null;
-  document.getElementById('video').style.display = 'none';
-  document.getElementById('btnStart').style.display = '';
-  document.getElementById('btnStop').style.display = 'none';
-  setScanStatus('Press Start for camera');
+function hasTorch() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return false;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return false;
+    const caps = track.getCapabilities();
+    return !!(caps && caps.torch);
+  } catch(e) { return false; }
+}
+
+async function toggleFlash() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return;
+    flashOn = !flashOn;
+    await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+    toast(flashOn ? '🔦 Flash on' : '🔦 Flash off');
+  } catch(e) {
+    toast('❌ Flash not supported on this device');
+  }
+}
+
+async function flipCamera() {
+  if (!cameras.length || !html5Qr || !scanning) return;
+  camIdx = (camIdx+1) % cameras.length;
+  try {
+    await html5Qr.stop();
+    await html5Qr.start(
+      cameras[camIdx].id,
+      { fps:10, qrbox:{ width:240, height:140 } },
+      (decoded) => handleBarcode(decoded),
+      () => {}
+    );
+    toast('📷 '+(cameras[camIdx].label||'Camera '+(camIdx+1)));
+  } catch(e) { toast('❌ Flip failed: '+e.message); }
+}
+
+function setScanStatus(msg, cls='') {
+  const el = document.getElementById('scanStatus');
+  el.textContent = msg;
+  el.className   = 'scan-status '+cls;
+}
+
+// ─── LOOKUP ──────────────────────────────────────────────────
+let lastBarcode='';
+let scanCooldown = false;
+
+function handleBarcode(code) {
+  // Accept 13-digit (EAN-13) and 14-digit (ITF-14/GS1-14) numeric barcodes.
+  // Shorter codes are handled by manual search only.
+  if (!/^\d{13,14}$/.test(code)) return;
+  if (code === lastBarcode || scanCooldown) return;
+  lastBarcode = code;
+  scanCooldown = true;
+  setTimeout(() => { lastBarcode = ''; scanCooldown = false; }, 2000);
+  navigator.vibrate && navigator.vibrate([60]);
+  setScanStatus('Scanned: ' + code, 'active-scan');
+  showResult(code, true);
 }
 
 function manualSearch() {
   const q = document.getElementById('manualBarcode').value.trim();
-  if (q) showResult(q, false);
+  if (!q) return;
+  showResult(q, false);
 }
 
 function showResult(query, fromScan) {
-  const el = document.getElementById('resultArea');
-  let hit = products.find(p => 
-    p.cupc === query || 
-    String(p.sku).includes(query) || 
-    p.citem.toLowerCase().includes(query.toLowerCase())
-  );
-  
-  if (!hit) {
-    el.innerHTML = `<div class="result-card not-found">
-      <div class="result-label">❌ Not Found</div>
-      <div class="result-name">"${query}"</div>
-    </div>`;
+  const cur = getSettings().currency || '₱';
+  const el  = document.getElementById('resultArea');
+  let hit   = null;
+
+  if (fromScan) {
+    // SCAN path: use pre-built index with normalization
+    const candidates = normalizeScanned(query);
+    for (const key of candidates) {
+      hit = barcodeIndex.get(key);
+      if (hit) break;
+    }
   } else {
-    el.innerHTML = `<div class="result-card found">
-      <div class="result-label">✅ ${hit.citem}</div>
-      <div class="result-price">₱${parseFloat(hit.mprice||0).toFixed(2)}</div>
-    </div>`;
+    // MANUAL path: flexible — barcode index, SKU, name, POS name
+    const q = query.toLowerCase().replace(/\.00$/, '');
+    // Try barcode index first (exact)
+    hit = barcodeIndex.get(query);
+    if (!hit) {
+      // Then text search across name/pos
+      hit = products.find(p => {
+        const name = (p.citem || '').toLowerCase();
+        const pos  = (p.pos18 || '').toLowerCase();
+        const sku  = String(p.sku || '').trim().replace(/\.00$/, '');
+        return sku === q || name.includes(q) || pos.includes(q);
+      });
+    }
   }
+
+  if (!hit) {
+    el.innerHTML=`
+      <div class="result-card not-found">
+        <div class="result-label">❌ Not Found</div>
+        <div class="result-name" style="color:var(--danger)">"${escHtml(query)}"</div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:6px">
+          No product matched this barcode or name.</div>
+      </div>`;
+    return;
+  }
+
+  const price = parseFloat(hit.mprice)||0;
+  const sku   = String(hit.sku||'').replace(/\.00$/,'');
+  el.innerHTML=`
+    <div class="result-card found">
+      <div class="result-label">✅ Product Found</div>
+      <div class="result-name">${escHtml(hit.citem)}</div>
+      <div class="result-price"><span class="peso">${cur}</span>${formatPrice(price)}</div>
+      <div class="result-meta">
+        ${hit.cupc&&hit.cupc!=='0'?`<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>`:''}
+        <div class="tag">SKU: <strong>${escHtml(sku)}</strong></div>
+        <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
+        ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
+      </div>
+    </div>`;
 }
 
-function escHtml(s) { return s.replace(/[&<>"']/g, m=>'&#'+m.charCodeAt(0)+';'); }
-
-function setScanStatus(msg) {
-  document.getElementById('scanStatus').textContent = msg;
-}
-
-function updateDbBadge(ok, count) {
-  const el = document.getElementById('dbStatusBadge');
-  el.className = ok ? 'status-badge ok' : 'status-badge err';
-  el.innerHTML = `<div class="dot"></div>${ok ? count + ' items' : 'No Data'}`;
-}
-
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2500);
-}
-
+// ─── BROWSE ──────────────────────────────────────────────────
 function renderBrowse() {
-  // Browse implementation from original
-  const q = document.getElementById('browseInput').value.toLowerCase();
-  const list = document.getElementById('browseList');
-  // Simplified for brevity
-  list.innerHTML = products.length ? 'Browse works' : 'No data';
+  const q   = (document.getElementById('browseInput').value||'').toLowerCase();
+  const cur = getSettings().currency||'₱';
+  const filtered = products.filter(p=>
+    !q || p.citem.toLowerCase().includes(q) ||
+    String(p.cupc).includes(q) ||
+    String(p.sku).replace(/\.00$/,'').includes(q) ||
+    (p.pos18&&p.pos18.toLowerCase().includes(q))
+  ).slice(0,100);
+
+  const el = document.getElementById('browseList');
+  if (!filtered.length) { el.innerHTML='<div class="no-results">No products found</div>'; return; }
+  el.innerHTML = filtered.map(p => {
+    const sku = String(p.sku||'').replace(/\.00$/,'');
+    const id  = p.cupc && p.cupc!=='0' ? p.cupc : sku;
+    return `
+    <div class="product-item" onclick="selectProduct('${escAttr(id)}')">
+      <div style="min-width:0;flex:1">
+        <div class="pname">${escHtml(p.citem)}</div>
+        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${sku} · ${p.cuom}</div>
+      </div>
+      <div class="pprice">${cur}${formatPrice(parseFloat(p.mprice)||0)}</div>
+    </div>`;
+  }).join('');
 }
 
-// Load on start
-loadCSV(true);
+function selectProduct(code) {
+  showTab('scan');
+  document.getElementById('manualBarcode').value = code;
+  showResult(code, false);
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
+function formatPrice(n) {
+  return Number.isInteger(n) ? n.toLocaleString(undefined, {maximumFractionDigits:0}) : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
 </script>
 </body>
 </html>
