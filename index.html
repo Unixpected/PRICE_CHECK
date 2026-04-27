@@ -413,7 +413,8 @@ async function fetchTimestampFromTxt() {
     const res = await fetch(tsUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const raw = await res.text();
-    return parseIsoTimestamp(raw);
+    const cleanRaw = raw.replace(/^\uFEFF/, '').trim();
+    return parseIsoTimestamp(cleanRaw);
   } catch (e) {
     console.warn('Timestamp fetch failed:', e);
     return null;
