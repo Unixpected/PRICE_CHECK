@@ -385,13 +385,19 @@ async function fetchTimestampFromTxt() {
   try {
     const res = await fetch(tsUrl);
     if (!res.ok) throw new Error('HTTP '+res.status);
-    const raw = (await res.text()).trim();
+    // Strip BOM (\uFEFF) and whitespace — the file has a BOM written by PowerShell
+    const raw = (await res.text()).replace(/^\uFEFF/, '').trim();
     if (!raw) return null;
 
-    // Handle ISO 8601 format like "2026-04-26T10:04:17.5561813Z"
-    const parsed = Date.parse(raw);
+    // Fix: JS Date.parse only handles up to 3 decimal places in seconds.
+    // PowerShell writes 7 decimal places e.g. "2026-04-26T10:04:17.5561813Z"
+    // Truncate fractional seconds to 3 digits so Android Chrome can parse it.
+    const normalized = raw.replace(/(\.\d{3})\d+(Z?)$/, '$1$2');
+
+    const parsed = Date.parse(normalized);
     if (!Number.isNaN(parsed)) return parsed;
 
+    // Fallback: plain numeric ms timestamp
     const asNum = Number(raw);
     if (!Number.isNaN(asNum) && asNum > 0) return asNum;
 
@@ -551,7 +557,74 @@ function parseCSV(text) {
     headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
     if (obj.citem) parsed.push(obj);
   }
+  buildBarcodeIndex(parsed);
   return parsed;
+}
+
+// ─── BARCODE INDEX ───────────────────────────────────────────
+// Pre-built map of every normalized barcode form → product
+// so scanned codes are resolved in O(1) with no per-scan loops.
+let barcodeIndex = new Map();
+
+function buildBarcodeIndex(prods) {
+  barcodeIndex = new Map();
+  for (const p of prods) {
+    const cupc = String(p.cupc || '').trim();
+    const sku  = String(p.sku  || '').trim().replace(/\.00$/, '');
+
+    // Index by the raw cupc as stored in CSV
+    if (cupc && cupc !== '0') indexAdd(cupc, p);
+
+    // Index by SKU (fallback for items whose barcode encodes the internal SKU)
+    if (sku) indexAdd(sku, p);
+
+    // Derived forms so a scanned code always resolves regardless of encoding:
+    if (cupc.length === 7 || cupc.length <= 12) {
+      // Short internal codes: a scanner may output them zero-padded to 13.
+      // Index the zero-padded 13-digit form too.
+      const padded = cupc.padStart(13, '0');
+      indexAdd(padded, p);
+    }
+    if (cupc.length === 14) {
+      if (cupc[0] === '1') {
+        // ITF-14 / GS1-14: leading '1' is an indicator digit.
+        // Scanners often output the inner 13 digits.
+        indexAdd(cupc.slice(1), p);   // strip first digit → 13
+      } else {
+        // Other 14-digit: drop check/trailing digit → 13
+        indexAdd(cupc.slice(0, -1), p);
+      }
+    }
+  }
+}
+
+function indexAdd(key, product) {
+  if (!barcodeIndex.has(key)) barcodeIndex.set(key, product);
+}
+
+// ─── BARCODE NORMALIZATION ───────────────────────────────────
+// Given a raw scanned code, return all candidate lookup keys in priority order.
+function normalizeScanned(code) {
+  const candidates = [code]; // always try exact first
+
+  if (code.length === 13) {
+    // Leading-zero-padded short code: strip leading zeros
+    // e.g. "0000004171560" → "4171560"
+    const stripped = code.replace(/^0+/, '') || '0';
+    if (stripped !== code) candidates.push(stripped);
+  }
+
+  if (code.length === 14) {
+    if (code[0] === '1') {
+      // ITF-14 with indicator digit: try inner 13
+      candidates.push(code.slice(1));
+    } else {
+      // Other 14-digit: try without last digit
+      candidates.push(code.slice(0, -1));
+    }
+  }
+
+  return candidates;
 }
 
 // Proper CSV parser that handles quoted fields
@@ -685,15 +758,15 @@ let lastBarcode='';
 let scanCooldown = false;
 
 function handleBarcode(code) {
-  // Physical barcodes on products are EAN-13 (13 digits).
-  // Strict 13-digit only — prevents partial scans and false positives.
-  if (!/^\d{13}$/.test(code)) return;
-  if (code===lastBarcode || scanCooldown) return;
+  // Accept 13-digit (EAN-13) and 14-digit (ITF-14/GS1-14) numeric barcodes.
+  // Shorter codes are handled by manual search only.
+  if (!/^\d{13,14}$/.test(code)) return;
+  if (code === lastBarcode || scanCooldown) return;
   lastBarcode = code;
   scanCooldown = true;
-  setTimeout(()=>{ lastBarcode=''; scanCooldown=false; }, 2000);
+  setTimeout(() => { lastBarcode = ''; scanCooldown = false; }, 2000);
   navigator.vibrate && navigator.vibrate([60]);
-  setScanStatus('Scanned: '+code, 'active-scan');
+  setScanStatus('Scanned: ' + code, 'active-scan');
   showResult(code, true);
 }
 
@@ -704,30 +777,31 @@ function manualSearch() {
 }
 
 function showResult(query, fromScan) {
-  const q   = query.toLowerCase().replace(/\.00$/, '');
-  const cur = getSettings().currency||'₱';
+  const cur = getSettings().currency || '₱';
   const el  = document.getElementById('resultArea');
-
-  let hit = null;
+  let hit   = null;
 
   if (fromScan) {
-    // SCAN path: strict lookup order
-    // 1) Exact 13-digit EAN barcode match (cupc)
-    hit = products.find(p => String(p.cupc||'').trim() === q);
-
-    // 2) Fallback: scanned code matches SKU (some items encoded with internal SKU as barcode)
-    if (!hit) {
-      hit = products.find(p => String(p.sku||'').trim().replace(/\.00$/,'') === q);
+    // SCAN path: use pre-built index with normalization
+    const candidates = normalizeScanned(query);
+    for (const key of candidates) {
+      hit = barcodeIndex.get(key);
+      if (hit) break;
     }
   } else {
-    // MANUAL path: flexible — barcode, SKU, name, POS name
-    hit = products.find(p => {
-      const barcode = String(p.cupc||'').trim();
-      const sku     = String(p.sku||'').trim().replace(/\.00$/,'');
-      const name    = (p.citem||'').toLowerCase();
-      const pos     = (p.pos18||'').toLowerCase();
-      return barcode === q || sku === q || name.includes(q) || pos.includes(q);
-    });
+    // MANUAL path: flexible — barcode index, SKU, name, POS name
+    const q = query.toLowerCase().replace(/\.00$/, '');
+    // Try barcode index first (exact)
+    hit = barcodeIndex.get(query);
+    if (!hit) {
+      // Then text search across name/pos
+      hit = products.find(p => {
+        const name = (p.citem || '').toLowerCase();
+        const pos  = (p.pos18 || '').toLowerCase();
+        const sku  = String(p.sku || '').trim().replace(/\.00$/, '');
+        return sku === q || name.includes(q) || pos.includes(q);
+      });
+    }
   }
 
   if (!hit) {
