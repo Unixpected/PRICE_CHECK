@@ -712,12 +712,7 @@ async function startScan() {
     if (camIdx < 0) camIdx = facing==='environment' ? cameras.length-1 : 0;
 
     html5Qr = new Html5Qrcode('reader');
-    await html5Qr.start(
-      cameras[camIdx].id,
-      { fps:10, qrbox:{ width:240, height:140 } },
-      (decoded) => handleBarcode(decoded),
-      (_err) => { /* ignore per-frame decode fails */ }
-    );
+    await html5Qr.start(\n      cameras[camIdx].id,\n      { fps: 20, qrbox: { width: 300, height: 200 }, aspectRatio: 1.0 },\n      (decoded) => handleBarcode(decoded),\n      (_err) => { /* ignore per-frame decode fails */ }\n    );
 
     scanning = true;
     flashOn = false;
@@ -777,12 +772,7 @@ async function flipCamera() {
   camIdx = (camIdx+1) % cameras.length;
   try {
     await html5Qr.stop();
-    await html5Qr.start(
-      cameras[camIdx].id,
-      { fps:10, qrbox:{ width:240, height:140 } },
-      (decoded) => handleBarcode(decoded),
-      () => {}
-    );
+    await html5Qr.start(\n      cameras[camIdx].id,\n      { fps: 20, qrbox: { width: 300, height: 200 }, aspectRatio: 1.0 },\n      (decoded) => handleBarcode(decoded),\n      () => {}\n    );
     toast('📷 '+(cameras[camIdx].label||'Camera '+(camIdx+1)));
   } catch(e) { toast('❌ Flip failed: '+e.message); }
 }
