@@ -373,40 +373,53 @@ function showTab(name) {
 // ─── CSV ─────────────────────────────────────────────────────
 function buildCsvUrl(s) {
   if (!s.user) return './products.csv';
-  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
+  return `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}`;
 }
+
+// ─── ROBUST ISO PARSER (Fixes "--" timestamp) ─────────────────
+function parseIsoTimestamp(isoStr) {
+  // Strip BOM/whitespace
+  let raw = isoStr.replace(/^\uFEFF/, '').trim();
+  if (!raw) return null;
+
+  // Simple regex extract: YYYY-MM-DDTHH:MM:SS.sssZ (handles 3-9 decimals)
+  const simpleMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?(Z)?$/i);
+  if (simpleMatch) {
+    const [,y,m,d,h,mi,s,ms,z] = simpleMatch;
+    const msNum = ms ? parseInt(ms.slice(1,4)) * (ms.length > 4 ? 1000 / Math.pow(10, ms.length-4) : 1) : 0;
+    return Date.UTC(+y, +m-1, +d, +h, +mi, +s, msNum);
+  }
+
+  // Full Date constructor fallback (truncates decimals automatically)
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.getTime();
+
+  // Plain numeric fallback
+  const num = Number(raw);
+  if (!isNaN(num) && num > 0) return num;
+
+  console.warn('Failed to parse timestamp:', raw);
+  return null;
+}
+
 
 async function fetchTimestampFromTxt() {
   const s = getSettings();
   const base = s.user
-    ? 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'
+    ? `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/`
     : './';
   const tsUrl = base + 'products_timestamp.txt?nc=' + Date.now();
   try {
     const res = await fetch(tsUrl);
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    // Strip BOM (\uFEFF) and whitespace — the file has a BOM written by PowerShell
-    const raw = (await res.text()).replace(/^\uFEFF/, '').trim();
-    if (!raw) return null;
-
-    // Fix: JS Date.parse only handles up to 3 decimal places in seconds.
-    // PowerShell writes 7 decimal places e.g. "2026-04-26T10:04:17.5561813Z"
-    // Truncate fractional seconds to 3 digits so Android Chrome can parse it.
-    const normalized = raw.replace(/(\.\d{3})\d+(Z?)$/, '$1$2');
-
-    const parsed = Date.parse(normalized);
-    if (!Number.isNaN(parsed)) return parsed;
-
-    // Fallback: plain numeric ms timestamp
-    const asNum = Number(raw);
-    if (!Number.isNaN(asNum) && asNum > 0) return asNum;
-
-    return null;
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.text();
+    return parseIsoTimestamp(raw);
   } catch (e) {
-    console.warn('Timestamp TXT fetch failed', e);
+    console.warn('Timestamp fetch failed:', e);
     return null;
   }
 }
+
 
 async function loadCSV(showFeedback=false) {
   updateDbBadge(null);
@@ -481,10 +494,11 @@ async function loadCSV(showFeedback=false) {
     try { txtTs = await fetchTimestampFromTxt(); } catch(_) {}
 
     const finalTs = txtTs || rawTs || Date.now();
-    localStorage.setItem('pcCsvTimestamp', String(finalTs));
+    localStorage.setItem('pcCsvTimestamp', raw);  // Store original ISO string
 
     updateDbBadge(true, products.length);
-    updateLastUpdated(finalTs);
+    updateLastUpdated(raw);  // Pass string, parse inside function
+
     if (showFeedback) toast('✅ Loaded '+products.length+' products'+(source==='local'?' (local)':''));
     return;
   }
@@ -497,6 +511,7 @@ async function loadCSV(showFeedback=false) {
       updateDbBadge(true, products.length);
       updateLastUpdated(cachedTs);
       if (showFeedback) toast('⚠️ Using offline data');
+
     } else {
       updateDbBadge(false, 0);
       updateLastUpdated(null);
@@ -522,23 +537,29 @@ function loadCachedCSV() {
   }
 }
 
-function updateLastUpdated(ts) {
+function updateLastUpdated(tsStr) {
   const el = document.getElementById('lastUpdated');
-  if (!ts) {
+  if (!tsStr) {
     el.textContent = '📅 Last updated: —';
     return;
   }
-  // ts may be stored as a string (numeric ms) or ISO string
-  const d = new Date(isNaN(ts) ? ts : Number(ts));
-  if (isNaN(d.getTime())) {
+
+  // Parse timestamp (robust)
+  const ts = parseIsoTimestamp(tsStr);
+  if (!ts || isNaN(ts)) {
+    console.warn('Invalid timestamp:', tsStr);
     el.textContent = '📅 Last updated: —';
     return;
   }
+
+  // Format for PH locale
+  const d = new Date(ts);
   el.textContent = '📅 Last updated: ' + d.toLocaleString('en-PH', {
-    month:'short', day:'numeric', year:'numeric',
-    hour:'2-digit', minute:'2-digit', hour12: true
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
   });
 }
+
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
