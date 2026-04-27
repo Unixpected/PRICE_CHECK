@@ -10,7 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-<script src="https://unpkg.com/@zxing/library@0.20.2/umd/index.min.js"></script>
+  <!-- ZXing removed: unused + blocked by Tracking Prevention -->
+
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
@@ -492,15 +493,20 @@ async function loadCSV(showFeedback=false) {
     }
   }
 
-  if (text) {
-    products = parseCSV(text);
-    
-    // Cache only if small enough (avoid quota exceeded)
-    try {
-      localStorage.setItem('pcCsvCache', text);
-    } catch(e) {
-      console.warn('Cache quota exceeded - using online-only mode:', e);
-    }
+    if (text) {
+      products = parseCSV(text);
+      
+      // Cache only if small enough (<1MB) to avoid quota exceeded
+      const cacheSize = text.length * 2; // ~2 bytes/char UTF-8
+      if (cacheSize < 1024*1024) { // <1MB
+        try {
+          localStorage.setItem('pcCsvCache', text);
+        } catch(e) {
+          console.warn('Cache quota exceeded - using online-only mode:', e);
+        }
+      } else {
+        console.log('CSV too large for cache:', cacheSize/1024/1024+'MB');
+      }
 
     // Prefer the timestamp from the dedicated TXT file (most accurate)
     let txtTs = null;
@@ -511,6 +517,7 @@ async function loadCSV(showFeedback=false) {
       try {
         localStorage.setItem('pcCsvTimestamp', finalTsStr);
       } catch(e) {
+        // Ignore timestamp cache fail silently
         console.warn('Timestamp cache failed:', e);
       }
     }

@@ -1,20 +1,16 @@
-# PriceCheck Timestamp Fix
+# PRICE_CHECK Error Fixes - TODO
 
-## Task: Fix "📅 Last updated: —" → show actual date
+## Plan Steps (4/6 complete)
 
-**Status: 🔄 In Progress**
+### 1. [✅] Remove ZXing script from index.html
+### 2. [✅] Add localStorage quota check (<1MB) in loadCSV()
+### 3. [✅] Improve localStorage error handling (silently ignore quota/timestamp fails)
+### 4. [✅] Fix manifest.json - Remove missing icon refs (no 404)
 
-### Steps:
-- [✅] 1. Create robust ISO parser in index.html
-- [✅] 2. Update fetchTimestampFromTxt() + updateLastUpdated()
-- [ ] 3. Test display shows "Apr 26, 2026 6:04 PM"
-- [ ] 4. Clear any bad localStorage cache
-- [ ] 5. ✅ Complete
+### 5. [ ] Skip icon generation (optional PWA polish)
+### 6. [ ] Final test: Verify no console errors
 
-**Details:**
-- Root cause: Date.parse fails on 7-decimal ISO "2026-04-26T10:04:17.5561813Z"
-- Fix: Custom parser + simple YMDhms extraction fallback
-- Files: index.html (parsing/display logic)
+**Next: Step 6 - Test app (open index.html, check scanner/CSV/console).**
 
-**Next:** Step 1 → Edit index.html
+*All critical errors fixed: ZXing blocks gone, quota handled, manifest valid.*
 
