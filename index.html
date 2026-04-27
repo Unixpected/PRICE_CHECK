@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <!-- html5-qrcode: actively maintained, works on Android Chrome -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
@@ -43,9 +42,9 @@
 
     /* ── TOP NAV ── */
     .topbar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 10px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -57,18 +56,6 @@
       letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
     }
     .topbar .logo span { color: var(--text); }
-    .topbar-right {
-      display: flex;
-      justify-content: flex-end;
-    }
-    .icon-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; width: 40px; height: 40px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: var(--text); font-size: 1.2rem;
-      transition: background 0.15s; flex-shrink: 0;
-    }
-    .icon-btn:active { background: var(--border); }
 
     /* badge */
     .status-badge {
@@ -236,8 +223,8 @@
       font-size: 0.72rem;
       color: var(--accent);
       font-weight: 600;
-      padding: 6px 10px;
-      background: rgba(15, 23, 42, 0.96);
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.97);
       border-top: 1px solid var(--border);
       white-space: nowrap;
       overflow: hidden;
@@ -260,13 +247,9 @@
 
 <!-- TOP BAR -->
 <header class="topbar">
-  <div class="topbar-left">
-    <div class="logo" id="logoText">Price<span>Check</span></div>
-  </div>
-  <div class="topbar-right">
-    <div id="dbStatusBadge" class="status-badge err">
-      <div class="dot"></div><span>No Data</span>
-    </div>
+  <div class="logo" id="logoText">Price<span>Check</span></div>
+  <div id="dbStatusBadge" class="status-badge err">
+    <div class="dot"></div><span>No Data</span>
   </div>
 </header>
 
@@ -295,7 +278,7 @@
     <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
   <div id="resultArea"></div>
-  <div style="padding:4px 18px 8px;">
+  <div style="padding:4px 18px 90px;">
     <button class="btn btn-ghost btn-full" style="padding:6px 12px;font-size:0.78rem;" onclick="loadCSV(true)">🔄 Refresh Product Data</button>
   </div>
 </div>
@@ -359,14 +342,12 @@ let flashOn  = false;
 window.addEventListener('DOMContentLoaded', () => {
   applyDisplaySettings();
 
-  // Always show a timestamp status immediately on first paint
   const initialTs = localStorage.getItem('pcCsvTimestamp');
   updateLastUpdated(initialTs);
 
   const hasCache = localStorage.getItem('pcCsvCache');
   if (hasCache) {
     loadCachedCSV();
-    // Still refresh from source in background to keep data/timestamp current
     loadCSV(false);
   } else {
     loadCSV(false);
@@ -407,6 +388,7 @@ async function fetchTimestampFromTxt() {
     const raw = (await res.text()).trim();
     if (!raw) return null;
 
+    // Handle ISO 8601 format like "2026-04-26T10:04:17.5561813Z"
     const parsed = Date.parse(raw);
     if (!Number.isNaN(parsed)) return parsed;
 
@@ -463,7 +445,6 @@ async function loadCSV(showFeedback=false) {
   let rawTs = null;
   let source = '';
 
-  // 1) Try configured GitHub / remote URL
   try {
     const remote = buildCsvUrl(getSettings()) + '?nc='+Date.now();
     const result = await tryFetch(remote);
@@ -474,7 +455,6 @@ async function loadCSV(showFeedback=false) {
     console.warn('Remote CSV failed:', e.message);
   }
 
-  // 2) Fallback to local products.csv
   if (!text) {
     try {
       const result = await tryFetch('./products.csv');
@@ -486,17 +466,16 @@ async function loadCSV(showFeedback=false) {
     }
   }
 
-  // 3) If we got data, parse and store
   if (text) {
     products = parseCSV(text);
     localStorage.setItem('pcCsvCache', text);
 
-    // Read source-of-truth timestamp from uploaded TXT
+    // Prefer the timestamp from the dedicated TXT file (most accurate)
     let txtTs = null;
     try { txtTs = await fetchTimestampFromTxt(); } catch(_) {}
 
     const finalTs = txtTs || rawTs || Date.now();
-    localStorage.setItem('pcCsvTimestamp', finalTs);
+    localStorage.setItem('pcCsvTimestamp', String(finalTs));
 
     updateDbBadge(true, products.length);
     updateLastUpdated(finalTs);
@@ -504,7 +483,6 @@ async function loadCSV(showFeedback=false) {
     return;
   }
 
-  // 4) Nothing worked — use cache if we have it
   const cachedTs = localStorage.getItem('pcCsvTimestamp');
   if (products.length === 0) {
     const cached = localStorage.getItem('pcCsvCache');
@@ -540,14 +518,19 @@ function loadCachedCSV() {
 
 function updateLastUpdated(ts) {
   const el = document.getElementById('lastUpdated');
-  if (!ts) { el.textContent = '📅 Main item data last updated: waiting for first successful sync'; return; }
-  const d = new Date(Number(ts));
-  if (Number.isNaN(d.getTime())) {
-    el.textContent = '📅 Main item data last updated: waiting for first successful sync';
+  if (!ts) {
+    el.textContent = '📅 Last updated: —';
     return;
   }
-  el.textContent = '📅 Main item data last updated: ' + d.toLocaleString(undefined, {
-    month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'
+  // ts may be stored as a string (numeric ms) or ISO string
+  const d = new Date(isNaN(ts) ? ts : Number(ts));
+  if (isNaN(d.getTime())) {
+    el.textContent = '📅 Last updated: —';
+    return;
+  }
+  el.textContent = '📅 Last updated: ' + d.toLocaleString('en-PH', {
+    month:'short', day:'numeric', year:'numeric',
+    hour:'2-digit', minute:'2-digit', hour12: true
   });
 }
 
@@ -555,12 +538,40 @@ function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
   const delim = lines[0].includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(delim).map(h=>h.trim().toLowerCase());
-  return lines.slice(1).map(line=>{
-    const cols=line.split(delim); const obj={};
-    headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
-    return obj;
-  }).filter(r=>r.citem);
+
+  // Parse header — strip BOM and quotes
+  const headers = lines[0].split(delim).map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, '').toLowerCase());
+
+  const parsed = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const cols = splitCSVLine(line, delim);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
+    if (obj.citem) parsed.push(obj);
+  }
+  return parsed;
+}
+
+// Proper CSV parser that handles quoted fields
+function splitCSVLine(line, delim) {
+  const cols = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === delim && !inQuote) {
+      cols.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cols.push(cur);
+  return cols;
 }
 
 function updateDbBadge(ok, count, loadingText='Loading…') {
@@ -575,14 +586,12 @@ async function startScan() {
   if (scanning) return;
   setScanStatus('Requesting camera…', 'active-scan');
   try {
-    // Request permission first so getCameras works on Android
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
     stream.getTracks().forEach(t=>t.stop());
 
     cameras = await Html5Qrcode.getCameras();
     if (!cameras || cameras.length===0) throw new Error('No camera found on this device');
 
-    // Pick back camera by label, or last index (usually back on Android)
     const facing = getSettings().camFacing || 'environment';
     camIdx = cameras.findIndex(c=>c.label.toLowerCase().includes(
       facing==='environment' ? 'back' : 'front'
@@ -592,7 +601,7 @@ async function startScan() {
     html5Qr = new Html5Qrcode('reader');
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:2, qrbox:{ width:180, height:120 } },
+      { fps:10, qrbox:{ width:240, height:140 } },
       (decoded) => handleBarcode(decoded),
       (_err) => { /* ignore per-frame decode fails */ }
     );
@@ -657,7 +666,7 @@ async function flipCamera() {
     await html5Qr.stop();
     await html5Qr.start(
       cameras[camIdx].id,
-      { fps:2, qrbox:{ width:180, height:120 } },
+      { fps:10, qrbox:{ width:240, height:140 } },
       (decoded) => handleBarcode(decoded),
       () => {}
     );
@@ -674,33 +683,52 @@ function setScanStatus(msg, cls='') {
 // ─── LOOKUP ──────────────────────────────────────────────────
 let lastBarcode='';
 let scanCooldown = false;
+
 function handleBarcode(code) {
-  // Only accept 13-digit numeric barcodes (EAN-13)
+  // Physical barcodes on products are EAN-13 (13 digits).
+  // Strict 13-digit only — prevents partial scans and false positives.
   if (!/^\d{13}$/.test(code)) return;
   if (code===lastBarcode || scanCooldown) return;
-  lastBarcode=code;
+  lastBarcode = code;
   scanCooldown = true;
-  setTimeout(()=>{ lastBarcode=''; scanCooldown=false; }, 1500);
+  setTimeout(()=>{ lastBarcode=''; scanCooldown=false; }, 2000);
   navigator.vibrate && navigator.vibrate([60]);
   setScanStatus('Scanned: '+code, 'active-scan');
-  showResult(code);
+  showResult(code, true);
 }
 
 function manualSearch() {
   const q = document.getElementById('manualBarcode').value.trim();
   if (!q) return;
-  showResult(q);
+  showResult(q, false);
 }
 
-function showResult(query) {
-  const q   = query.toLowerCase();
-  const hit = products.find(p=>
-    String(p.cupc)===q || String(p.sku)===q ||
-    p.citem.toLowerCase().includes(q) ||
-    (p.pos18 && p.pos18.toLowerCase().includes(q))
-  );
+function showResult(query, fromScan) {
+  const q   = query.toLowerCase().replace(/\.00$/, '');
   const cur = getSettings().currency||'₱';
   const el  = document.getElementById('resultArea');
+
+  let hit = null;
+
+  if (fromScan) {
+    // SCAN path: strict lookup order
+    // 1) Exact 13-digit EAN barcode match (cupc)
+    hit = products.find(p => String(p.cupc||'').trim() === q);
+
+    // 2) Fallback: scanned code matches SKU (some items encoded with internal SKU as barcode)
+    if (!hit) {
+      hit = products.find(p => String(p.sku||'').trim().replace(/\.00$/,'') === q);
+    }
+  } else {
+    // MANUAL path: flexible — barcode, SKU, name, POS name
+    hit = products.find(p => {
+      const barcode = String(p.cupc||'').trim();
+      const sku     = String(p.sku||'').trim().replace(/\.00$/,'');
+      const name    = (p.citem||'').toLowerCase();
+      const pos     = (p.pos18||'').toLowerCase();
+      return barcode === q || sku === q || name.includes(q) || pos.includes(q);
+    });
+  }
 
   if (!hit) {
     el.innerHTML=`
@@ -714,6 +742,7 @@ function showResult(query) {
   }
 
   const price = parseFloat(hit.mprice)||0;
+  const sku   = String(hit.sku||'').replace(/\.00$/,'');
   el.innerHTML=`
     <div class="result-card found">
       <div class="result-label">✅ Product Found</div>
@@ -721,7 +750,7 @@ function showResult(query) {
       <div class="result-price"><span class="peso">${cur}</span>${formatPrice(price)}</div>
       <div class="result-meta">
         ${hit.cupc&&hit.cupc!=='0'?`<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>`:''}
-        <div class="tag">SKU: <strong>${escHtml(String(hit.sku).replace(/\.00$/,''))}</strong></div>
+        <div class="tag">SKU: <strong>${escHtml(sku)}</strong></div>
         <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
         ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
       </div>
@@ -734,26 +763,31 @@ function renderBrowse() {
   const cur = getSettings().currency||'₱';
   const filtered = products.filter(p=>
     !q || p.citem.toLowerCase().includes(q) ||
-    String(p.cupc).includes(q) || String(p.sku).includes(q) ||
+    String(p.cupc).includes(q) ||
+    String(p.sku).replace(/\.00$/,'').includes(q) ||
     (p.pos18&&p.pos18.toLowerCase().includes(q))
   ).slice(0,100);
 
   const el = document.getElementById('browseList');
   if (!filtered.length) { el.innerHTML='<div class="no-results">No products found</div>'; return; }
-  el.innerHTML = filtered.map(p=>`
-    <div class="product-item" onclick="selectProduct('${escAttr(p.cupc&&p.cupc!=='0'?p.cupc:String(p.sku).replace(/\.00$/,''))}')">
+  el.innerHTML = filtered.map(p => {
+    const sku = String(p.sku||'').replace(/\.00$/,'');
+    const id  = p.cupc && p.cupc!=='0' ? p.cupc : sku;
+    return `
+    <div class="product-item" onclick="selectProduct('${escAttr(id)}')">
       <div style="min-width:0;flex:1">
         <div class="pname">${escHtml(p.citem)}</div>
-        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${String(p.sku).replace(/\.00$/,'')} · ${p.cuom}</div>
+        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${sku} · ${p.cuom}</div>
       </div>
       <div class="pprice">${cur}${formatPrice(parseFloat(p.mprice)||0)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function selectProduct(code) {
   showTab('scan');
   document.getElementById('manualBarcode').value = code;
-  showResult(code);
+  showResult(code, false);
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
@@ -774,4 +808,3 @@ function toast(msg) {
 </script>
 </body>
 </html>
-

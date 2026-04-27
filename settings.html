@@ -42,16 +42,15 @@
     .topbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
+      padding: 10px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
-      gap: 10px;
+      gap: 12px;
     }
     .topbar .logo {
-      font-size: 1.1rem; font-weight: 800;
-      letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
+      font-size: 1.05rem; font-weight: 800;
+      letter-spacing: -0.5px; color: var(--text); flex: 1;
     }
     .icon-btn {
       background: var(--surface2); border: 1px solid var(--border);
@@ -81,46 +80,112 @@
     #lockPin:focus { border-color:var(--accent); }
     #lockError { color:var(--danger); font-size:0.82rem; min-height:18px; }
 
-    #settingsContent { display:none; flex-direction:column; }
+    /* ── SETTINGS CONTENT ── */
+    #settingsContent { display:none; flex-direction:column; padding-bottom: 20px; }
+
+    .settings-section-title {
+      padding: 14px 18px 6px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 700;
+    }
 
     .settings-group {
-      margin:10px 18px; background:var(--surface);
-      border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+      margin: 0 18px 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
     }
-    .settings-header {
-      padding:9px 16px; font-size:0.7rem; text-transform:uppercase;
-      letter-spacing:0.1em; color:var(--muted); background:var(--bg);
-    }
+
     .settings-row {
-      display:flex; flex-direction:column; gap:5px;
-      padding:13px 16px; border-top:1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
     }
-    .settings-row:first-of-type { border-top:none; }
-    .settings-row label { font-size:0.82rem; color:var(--muted); font-weight:600; }
-    .settings-row input, .settings-row select {
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:8px; color:var(--text); font-size:0.95rem;
-      padding:10px 12px; outline:none; width:100%; -webkit-appearance:none;
+    .settings-row:first-child { border-top: none; }
+    .settings-row label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+
+    .settings-row input,
+    .settings-row select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 10px 12px;
+      outline: none;
+      width: 100%;
+      -webkit-appearance: none;
     }
-    .settings-row input:focus, .settings-row select:focus { border-color:var(--accent); }
-    .settings-note { padding:8px 16px 12px; font-size:0.78rem; color:var(--muted); line-height:1.6; }
-    .save-btn-wrap { padding:4px 18px 10px; }
+    .settings-row input:focus,
+    .settings-row select:focus { border-color: var(--accent); }
+    .settings-row input::placeholder { color: var(--muted); }
+
+    /* Info box */
+    .info-box {
+      margin: 0 18px 4px;
+      background: rgba(56,189,248,0.07);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .info-box strong { color: var(--accent); }
+    .info-box code {
+      display: block;
+      margin-top: 6px;
+      color: var(--accent);
+      font-size: 0.75rem;
+      word-break: break-all;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    /* Action row (inline save buttons inside groups) */
+    .action-row {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
 
     .btn {
-      border:none; border-radius:var(--radius-sm);
-      padding:10px 20px; font-size:0.9rem; font-weight:700;
-      cursor:pointer; transition:opacity 0.15s, transform 0.1s;
-      display:flex; align-items:center; gap:7px;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 11px 20px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
     }
     .btn:active { transform:scale(0.96); opacity:0.8; }
     .btn-primary { background:var(--accent); color:#0f172a; }
     .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
     .btn-full    { width:100%; justify-content:center; }
     .btn-warn    { background:#92400e; color:#fef3c7; border:1px solid #b45309; }
+    .btn-danger  { background:#450a0a; color:var(--danger); border:1px solid #991b1b; }
+
+    /* Row with two inline buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 18px;
+      margin-top: 8px;
+    }
+    .btn-row .btn { flex:1; justify-content:center; }
 
     /* ── MODAL ── */
     .modal-backdrop {
-      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      position:fixed; inset:0; background:rgba(0,0,0,0.8);
       display:none; align-items:center; justify-content:center;
       z-index:500; padding:20px;
     }
@@ -150,6 +215,16 @@
       white-space:nowrap; z-index:999;
     }
     #toast.show { opacity:1; }
+
+    /* Danger zone */
+    .danger-zone {
+      margin: 0 18px 4px;
+      background: rgba(248,113,113,0.05);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .danger-zone .settings-row label { color: var(--danger); }
   </style>
 </head>
 <body>
@@ -157,112 +232,130 @@
 <!-- TOP BAR -->
 <header class="topbar">
   <a class="icon-btn" href="index.html" title="Back">←</a>
-  <div class="logo">Settings</div>
-  <div style="width:40px;"></div>
+  <div class="logo">⚙️ Settings</div>
+  <button class="icon-btn" onclick="lockSettings()" title="Lock settings" style="font-size:1rem;">🔒</button>
 </header>
 
-<!-- LOCK SCREEN -->
+<!-- ══ LOCK SCREEN ══════════════════════════════════════════ -->
 <div id="settingsLock">
   <div class="lock-icon">🔒</div>
   <div class="lock-title">Settings Locked</div>
-    <div class="lock-sub">Enter your PIN to access settings.</div>
+  <div class="lock-sub">Enter your PIN to access settings.</div>
   <div id="lockPinWrap">
     <input id="lockPin" type="password" inputmode="numeric" maxlength="8"
-           placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" />
+           placeholder="••••" onkeydown="if(event.key==='Enter')unlockSettings()" autofocus />
     <button class="btn btn-primary" onclick="unlockSettings()">Unlock</button>
   </div>
   <div id="lockError"></div>
 </div>
 
-<!-- SETTINGS CONTENT -->
+<!-- ══ SETTINGS CONTENT ══════════════════════════════════════ -->
 <div id="settingsContent">
-  <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:1.1rem;font-weight:800;">Settings</div>
-    <button class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem;" onclick="lockSettings()">🔒 Lock</button>
+
+  <!-- ── DATA SOURCE ── -->
+  <div class="settings-section-title">📦 Data Source</div>
+
+  <div class="info-box" id="csvUrlBox">
+    Product data is pulled from GitHub. Your current CSV URL:
+    <code id="previewUrl">—</code>
   </div>
 
-  <!-- DATA SOURCE -->
   <div class="settings-group">
-    <div class="settings-header">📦 Data Source (GitHub CSV)</div>
     <div class="settings-row">
       <label>GitHub Username</label>
-      <input id="cfgUser" type="text" placeholder="e.g. yourusername" autocomplete="off" />
+      <input id="cfgUser" type="text" placeholder="e.g. yourusername"
+             autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+             oninput="refreshPreviewUrl()" />
     </div>
     <div class="settings-row">
       <label>Repository Name</label>
-      <input id="cfgRepo" type="text" placeholder="e.g. price-checker" autocomplete="off" />
+      <input id="cfgRepo" type="text" placeholder="e.g. PRICE_CHECK"
+             autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+             oninput="refreshPreviewUrl()" />
     </div>
     <div class="settings-row">
       <label>Branch</label>
-      <input id="cfgBranch" type="text" placeholder="main" autocomplete="off" />
+      <input id="cfgBranch" type="text" placeholder="main"
+             autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+             oninput="refreshPreviewUrl()" />
     </div>
     <div class="settings-row">
       <label>CSV File Path</label>
-      <input id="cfgPath" type="text" placeholder="products.csv" autocomplete="off" />
+      <input id="cfgPath" type="text" placeholder="products.csv"
+             autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+             oninput="refreshPreviewUrl()" />
     </div>
-    <div class="settings-note">
-      CSV URL preview:<br>
-      <code style="color:var(--accent);font-size:0.77rem;word-break:break-all;" id="previewUrl">—</code>
+    <div class="action-row">
+      <button class="btn btn-primary btn-full" onclick="saveDataSource()">💾 Save Data Source</button>
     </div>
-  </div>
-  <div class="save-btn-wrap">
-    <button class="btn btn-primary btn-full" onclick="saveSettings()">💾 Save &amp; Reload Data</button>
   </div>
 
-  <!-- CAMERA -->
+  <!-- ── DISPLAY ── -->
+  <div class="settings-section-title">💱 Display</div>
+
   <div class="settings-group">
-    <div class="settings-header">📷 Camera</div>
+    <div class="settings-row">
+      <label>Store / App Name</label>
+      <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
+    </div>
+    <div class="settings-row">
+      <label>Currency Symbol</label>
+      <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
+    </div>
+    <div class="action-row">
+      <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
+    </div>
+  </div>
+
+  <!-- ── CAMERA ── -->
+  <div class="settings-section-title">📷 Camera</div>
+
+  <div class="settings-group">
     <div class="settings-row">
       <label>Preferred Camera</label>
       <select id="camSelect" onchange="saveCamPref()">
-        <option value="environment">Back Camera (default)</option>
+        <option value="environment">Back Camera (recommended)</option>
         <option value="user">Front Camera</option>
       </select>
     </div>
   </div>
 
-  <!-- DISPLAY -->
-  <div class="settings-group">
-    <div class="settings-header">💱 Display</div>
-    <div class="settings-row">
-      <label>Currency Symbol</label>
-      <input id="cfgCurrency" type="text" placeholder="₱" maxlength="3" />
-    </div>
-    <div class="settings-row">
-      <label>Store Name</label>
-      <input id="cfgStoreName" type="text" placeholder="PriceCheck" />
-    </div>
-  </div>
-  <div class="save-btn-wrap" style="padding-top:0">
-    <button class="btn btn-ghost btn-full" onclick="saveDisplay()">✅ Apply Display Settings</button>
-  </div>
+  <!-- ── SECURITY ── -->
+  <div class="settings-section-title">🔐 Security</div>
 
-  <!-- SECURITY -->
   <div class="settings-group">
-    <div class="settings-header">🔐 Security</div>
-    <div class="settings-note" style="padding-top:12px;">
-      Change the PIN required to open Settings.
-    </div>
-    <div style="padding:0 16px 14px;">
+    <div class="settings-row">
+      <label>Settings PIN</label>
       <button class="btn btn-warn btn-full" onclick="openChangePinModal()">🔑 Change PIN</button>
     </div>
   </div>
 
-  <!-- ABOUT -->
+  <!-- ── CACHE / DATA ── -->
+  <div class="settings-section-title">🗄️ Cached Data</div>
+
   <div class="settings-group">
-    <div class="settings-header">ℹ️ GitHub Folder Structure</div>
-    <div class="settings-note" style="padding-top:10px;">
-      📁 your-repo/<br>
-      &nbsp;&nbsp;📄 index.html<br>
-      &nbsp;&nbsp;📄 manifest.json<br>
-      &nbsp;&nbsp;📄 products.csv ← edit this to update prices<br><br>
-      Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
+    <div class="settings-row">
+      <label>Offline Cache</label>
+      <div id="cacheInfo" style="font-size:0.82rem;color:var(--muted);padding:2px 0;">—</div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-danger btn-full" onclick="clearCache()">🗑️ Clear Cached Product Data</button>
     </div>
   </div>
-  <div style="height:10px;"></div>
+
+  <!-- ── ABOUT ── -->
+  <div class="settings-section-title">ℹ️ About</div>
+
+  <div class="info-box" style="margin-bottom:8px;">
+    <strong>PriceCheck</strong> — store price checker with barcode scanning.<br><br>
+    📁 Repo structure:<br>
+    &nbsp; index.html · settings.html · manifest.json · products.csv<br><br>
+    Enable GitHub Pages: <em>Settings → Pages → Deploy from branch (main)</em>
+  </div>
+
 </div><!-- /settingsContent -->
 
-<!-- ══ CHANGE PIN MODAL ═══════════════════════════════════════ -->
+<!-- ══ CHANGE PIN MODAL ══════════════════════════════════════ -->
 <div id="pinModal" class="modal-backdrop">
   <div class="modal">
     <h3>🔑 Change PIN</h3>
@@ -291,6 +384,12 @@ function getSettings() {
 }
 function setSettings(obj) {
   localStorage.setItem('pcSettings', JSON.stringify({ ...getSettings(), ...obj }));
+}
+
+// ─── CSV URL BUILDER ─────────────────────────────────────────
+function buildCsvUrl(s) {
+  if (!s.user) return './products.csv';
+  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
 }
 
 // ─── INIT ────────────────────────────────────────────────────
@@ -349,58 +448,79 @@ function savePin() {
   toast('✅ PIN changed successfully');
 }
 
-// ─── CSV URL BUILDER ─────────────────────────────────────────
-function buildCsvUrl(s) {
-  if (!s.user) return './products.csv';
-  return 'https://raw.githubusercontent.com/'+s.user+'/'+s.repo+'/'+s.branch+'/'+s.path;
-}
-
 // ─── SETTINGS UI ─────────────────────────────────────────────
 function loadSettingsUI() {
   const s = getSettings();
   document.getElementById('cfgUser').value      = s.user      || '';
-  document.getElementById('cfgRepo').value      = s.repo      || 'price-checker';
+  document.getElementById('cfgRepo').value      = s.repo      || '';
   document.getElementById('cfgBranch').value    = s.branch    || 'main';
   document.getElementById('cfgPath').value      = s.path      || 'products.csv';
   document.getElementById('cfgCurrency').value  = s.currency  || '₱';
   document.getElementById('cfgStoreName').value = s.storeName || 'PriceCheck';
   document.getElementById('camSelect').value    = s.camFacing || 'environment';
-  ['cfgUser','cfgRepo','cfgBranch','cfgPath'].forEach(id=>{
-    document.getElementById(id).oninput = refreshPreviewUrl;
-  });
   refreshPreviewUrl();
+  refreshCacheInfo();
 }
 
 function refreshPreviewUrl() {
   const s = {
-    user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'products.csv',
+    user:   document.getElementById('cfgUser').value.trim(),
+    repo:   document.getElementById('cfgRepo').value.trim() || 'PRICE_CHECK',
+    branch: document.getElementById('cfgBranch').value.trim() || 'main',
+    path:   document.getElementById('cfgPath').value.trim() || 'products.csv',
   };
   document.getElementById('previewUrl').textContent = buildCsvUrl(s);
 }
 
-function saveSettings() {
+function refreshCacheInfo() {
+  const cache = localStorage.getItem('pcCsvCache');
+  const ts    = localStorage.getItem('pcCsvTimestamp');
+  const el    = document.getElementById('cacheInfo');
+  if (!cache) { el.textContent = 'No cached data.'; return; }
+  const kb = Math.round(cache.length / 1024);
+  let dateStr = '—';
+  if (ts) {
+    const d = new Date(isNaN(ts) ? ts : Number(ts));
+    if (!isNaN(d.getTime())) {
+      dateStr = d.toLocaleString('en-PH', {
+        month:'short', day:'numeric', year:'numeric',
+        hour:'2-digit', minute:'2-digit', hour12: true
+      });
+    }
+  }
+  el.textContent = kb + ' KB cached · Last synced: ' + dateStr;
+}
+
+// ─── SAVE FUNCTIONS ───────────────────────────────────────────
+function saveDataSource() {
   setSettings({
-    user:  document.getElementById('cfgUser').value.trim(),
-    repo:  document.getElementById('cfgRepo').value.trim()||'price-checker',
-    branch:document.getElementById('cfgBranch').value.trim()||'main',
-    path:  document.getElementById('cfgPath').value.trim()||'products.csv',
+    user:   document.getElementById('cfgUser').value.trim(),
+    repo:   document.getElementById('cfgRepo').value.trim() || 'PRICE_CHECK',
+    branch: document.getElementById('cfgBranch').value.trim() || 'main',
+    path:   document.getElementById('cfgPath').value.trim() || 'products.csv',
   });
-  toast('✅ Data source saved. Reload the main app to fetch new data.');
+  toast('✅ Saved. Go back and tap 🔄 Refresh to load new data.');
 }
 
 function saveDisplay() {
   setSettings({
-    currency: document.getElementById('cfgCurrency').value.trim()||'₱',
-    storeName:document.getElementById('cfgStoreName').value.trim()||'PriceCheck',
+    currency:  document.getElementById('cfgCurrency').value.trim() || '₱',
+    storeName: document.getElementById('cfgStoreName').value.trim() || 'PriceCheck',
   });
   toast('✅ Display settings saved');
 }
 
 function saveCamPref() {
   setSettings({ camFacing: document.getElementById('camSelect').value });
+  toast('✅ Camera preference saved');
+}
+
+function clearCache() {
+  if (!confirm('Clear cached product data? The app will reload data from GitHub next time.')) return;
+  localStorage.removeItem('pcCsvCache');
+  localStorage.removeItem('pcCsvTimestamp');
+  refreshCacheInfo();
+  toast('🗑️ Cache cleared');
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
@@ -409,9 +529,8 @@ function toast(msg) {
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
 }
 </script>
 </body>
 </html>
-
