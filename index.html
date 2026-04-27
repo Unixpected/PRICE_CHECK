@@ -385,10 +385,15 @@ function parseIsoTimestamp(isoStr) {
   // Simple regex extract: YYYY-MM-DDTHH:MM:SS.sssZ (handles 3-9 decimals)
   const simpleMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?(Z)?$/i);
   if (simpleMatch) {
-    const [,y,m,d,h,mi,s,ms,z] = simpleMatch;
-    const msNum = ms ? parseInt(ms.slice(1,4)) * (ms.length > 4 ? 1000 / Math.pow(10, ms.length-4) : 1) : 0;
+    const [,y,m,d,h,mi,s,ms] = simpleMatch;
+    let msNum = 0;
+    if (ms) {
+      const frac = ms.slice(1);
+      msNum = Math.floor(parseFloat(frac) * 1000);
+    }
     return Date.UTC(+y, +m-1, +d, +h, +mi, +s, msNum);
   }
+
 
   // Full Date constructor fallback (truncates decimals automatically)
   const d = new Date(raw);
