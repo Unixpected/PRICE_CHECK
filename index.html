@@ -667,7 +667,7 @@ function normalizeScanned(code) {
   return candidates;
 }
 
-// Proper CSV parser that handles quoted fields
+// Proper CSV parser that handles quoted fields and stray \r inside values
 function splitCSVLine(line, delim) {
   const cols = [];
   let cur = '';
@@ -679,6 +679,8 @@ function splitCSVLine(line, delim) {
       else inQuote = !inQuote;
     } else if (ch === delim && !inQuote) {
       cols.push(cur); cur = '';
+    } else if (ch === '\r') {
+      // Strip stray carriage returns (sqlcmd embeds \r inside quoted last fields)
     } else {
       cur += ch;
     }

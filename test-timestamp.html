@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<title>Timestamp Test</title>
+<script>
+const raw = `2026-04-26T10:04:17.5561813Z`;
+
+function parseIsoTimestamp(isoStr) {
+  let txt = isoStr.replace(/^\uFEFF/, '').trim();
+  if (!txt) return null;
+
+  const simpleMatch = txt.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?(Z)?$/i);
+  if (simpleMatch) {
+    const [,y,m,d,h,mi,s,ms] = simpleMatch;
+    let msNum = 0;
+    if (ms) {
+      const frac = ms.slice(1);
+      msNum = Math.floor(parseFloat(frac) * 1000);
+    }
+    const ts = Date.UTC(+y, +m-1, +d, +h, +mi, +s, msNum);
+    document.write(`RAW: ${JSON.stringify(txt)}<br>MATCH: true<br>TS: ${ts}<br>DATE: ${new Date(ts).toLocaleString('en-PH', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', hour12: true})}<hr>`);
+    return ts;
+  }
+  document.write(`NO MATCH for ${JSON.stringify(txt)}`);
+  return null;
+}
+
+document.write('<h2>Test 1: Hardcoded</h2>');
+parseIsoTimestamp(raw);
+
+document.write('<h2>Test 2: File</h2>');
+fetch('./products_timestamp.txt').then(r=>r.text()).then(parseIsoTimestamp);
+</script>
+
