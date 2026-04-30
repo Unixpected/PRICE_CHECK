@@ -1,8 +1,0 @@
-sync_sql_to_github.bat
-*.bat
-*.tmp
-_temp_products.csv
-_github_upload.json
-_ps_*.ps1
-_export_products.sql
-
