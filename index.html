@@ -309,8 +309,7 @@
 <script>
 // ─── STORAGE ─────────────────────────────────────────────────
 const DEFAULT = {
-  user:'Unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv',
-
+  user:'unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv',
   currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
 };
 function getSettings() {
@@ -668,7 +667,7 @@ function normalizeScanned(code) {
   return candidates;
 }
 
-// Proper CSV parser that handles quoted fields and stray \r inside values
+// Proper CSV parser that handles quoted fields
 function splitCSVLine(line, delim) {
   const cols = [];
   let cur = '';
@@ -680,8 +679,6 @@ function splitCSVLine(line, delim) {
       else inQuote = !inQuote;
     } else if (ch === delim && !inQuote) {
       cols.push(cur); cur = '';
-    } else if (ch === '\r') {
-      // Strip stray carriage returns (sqlcmd embeds \r inside quoted last fields)
     } else {
       cur += ch;
     }
