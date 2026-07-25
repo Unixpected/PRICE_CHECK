@@ -212,6 +212,56 @@
     .pprice { font-size:1.1rem; font-weight:800; color:var(--price); white-space:nowrap; padding-left:10px; }
     .no-results { text-align:center; color:var(--muted); padding:40px 18px; font-size:0.95rem; }
 
+    /* quick add button on browse rows */
+    .badd {
+      background:var(--accent); color:#0f172a; border:none; border-radius:8px;
+      width:34px; height:34px; font-size:1.1rem; font-weight:800; margin-left:10px;
+      flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+    .badd:active { transform:scale(0.92); }
+
+    /* ── BASKET PAGE ── */
+    .basket-summary {
+      margin:6px 18px 4px; background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 18px; display:flex;
+      justify-content:space-between; align-items:center;
+    }
+    .basket-summary .btotal-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+    .basket-summary .btotal-value { font-size:1.6rem; font-weight:900; color:var(--price); letter-spacing:-0.5px; }
+    .basket-list { padding:6px 18px 10px; display:flex; flex-direction:column; gap:8px; }
+    .basket-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+      padding:12px 14px; display:flex; align-items:center; gap:10px;
+    }
+    .basket-item .bname { font-size:0.9rem; font-weight:700; line-height:1.3; }
+    .basket-item .bmeta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+    .basket-item .bline { font-size:0.95rem; font-weight:800; color:var(--price); white-space:nowrap; }
+    .bqty {
+      display:flex; align-items:center; gap:6px; background:var(--surface2);
+      border:1px solid var(--border); border-radius:8px; padding:2px;
+    }
+    .bqty button {
+      width:26px; height:26px; border:none; border-radius:6px; background:transparent;
+      color:var(--text); font-size:1rem; font-weight:800; cursor:pointer;
+    }
+    .bqty button:active { background:var(--border); }
+    .bqty span { min-width:22px; text-align:center; font-size:0.85rem; font-weight:700; }
+    .bremove {
+      background:none; border:none; color:var(--danger); font-size:1.1rem;
+      cursor:pointer; padding:4px 6px; flex-shrink:0;
+    }
+    .basket-empty { text-align:center; color:var(--muted); padding:50px 18px; font-size:0.95rem; }
+    .basket-actions { padding:4px 18px 90px; }
+
+    /* tab badge (item count) */
+    .tab { position:relative; }
+    .tab-count {
+      position:absolute; top:4px; right:calc(50% - 22px);
+      background:var(--danger); color:#fff; font-size:0.62rem; font-weight:800;
+      min-width:16px; height:16px; border-radius:9px; display:flex; align-items:center;
+      justify-content:center; padding:0 4px; line-height:1;
+    }
+
     /* ── BOTTOM TIMESTAMP ── */
     .bottom-timestamp {
       position: fixed;
@@ -293,6 +343,22 @@
   <div id="browseList" class="product-list"></div>
 </div>
 
+<!-- ══ BASKET PAGE ════════════════════════════════════════════ -->
+<div id="page-basket" class="page">
+  <div class="page-title">My Basket</div>
+  <div class="basket-summary">
+    <div>
+      <div class="btotal-label">Total</div>
+      <div class="btotal-value" id="basketTotal">₱0</div>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted)" id="basketCountLabel">0 items</div>
+  </div>
+  <div id="basketList" class="basket-list"></div>
+  <div class="basket-actions">
+    <button class="btn btn-warn btn-full" onclick="clearBasket()">🗑 Clear Basket</button>
+  </div>
+</div>
+
 <!-- ══ BOTTOM TAB BAR ═════════════════════════════════════════ -->
 <nav class="tabbar">
   <button class="tab active" id="tab-scan"     onclick="showTab('scan')">
@@ -300,6 +366,10 @@
   </button>
   <button class="tab"        id="tab-search"   onclick="showTab('search')">
     <span class="tab-icon">🔍</span>Browse
+  </button>
+  <button class="tab"        id="tab-basket"   onclick="showTab('basket')">
+    <span class="tab-icon">🧺</span>Basket
+    <span class="tab-count" id="basketBadge" style="display:none">0</span>
   </button>
 </nav>
 
@@ -352,6 +422,8 @@ window.addEventListener('DOMContentLoaded', () => {
   } else {
     loadCSV(false);
   }
+
+  updateBasketBadge();
 });
 
 function applyDisplaySettings() {
@@ -368,6 +440,7 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if (name==='search') renderBrowse();
+  if (name==='basket') renderBasket();
 }
 
 // ─── CSV ─────────────────────────────────────────────────────
@@ -857,6 +930,7 @@ function showResult(query, fromScan) {
 
   const price = parseFloat(hit.mprice)||0;
   const sku   = String(hit.sku||'').replace(/\.00$/,'');
+  const pid   = hit.cupc && hit.cupc!=='0' ? hit.cupc : sku;
   el.innerHTML=`
     <div class="result-card found">
       <div class="result-label">✅ Product Found</div>
@@ -868,6 +942,7 @@ function showResult(query, fromScan) {
         <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
         ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
       </div>
+      <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="addToBasket('${escAttr(pid)}')">🧺 Add to Basket</button>
     </div>`;
 }
 
@@ -894,6 +969,7 @@ function renderBrowse() {
         <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${sku} · ${p.cuom}</div>
       </div>
       <div class="pprice">${cur}${formatPrice(parseFloat(p.mprice)||0)}</div>
+      <button class="badd" onclick="event.stopPropagation();addToBasket('${escAttr(id)}')">+</button>
     </div>`;
   }).join('');
 }
@@ -902,6 +978,114 @@ function selectProduct(code) {
   showTab('scan');
   document.getElementById('manualBarcode').value = code;
   showResult(code, false);
+}
+
+// ─── BASKET ──────────────────────────────────────────────────
+function getBasket() {
+  try { return JSON.parse(localStorage.getItem('pcBasket')||'[]'); }
+  catch { return []; }
+}
+function setBasket(arr) {
+  localStorage.setItem('pcBasket', JSON.stringify(arr));
+  updateBasketBadge();
+}
+
+function findProductById(id) {
+  return products.find(p => {
+    const sku = String(p.sku||'').trim().replace(/\.00$/,'');
+    const pid = p.cupc && p.cupc!=='0' ? p.cupc : sku;
+    return pid === id;
+  });
+}
+
+function addToBasket(id) {
+  const p = findProductById(id);
+  if (!p) { toast('❌ Product not found'); return; }
+  const basket = getBasket();
+  const existing = basket.find(b => b.id === id);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    basket.push({
+      id,
+      name: p.citem,
+      price: parseFloat(p.mprice)||0,
+      uom: p.cuom||'',
+      qty: 1
+    });
+  }
+  setBasket(basket);
+  toast('🧺 Added: '+p.citem);
+  if (document.getElementById('page-basket').classList.contains('active')) renderBasket();
+}
+
+function changeBasketQty(id, delta) {
+  const basket = getBasket();
+  const item = basket.find(b => b.id === id);
+  if (!item) return;
+  item.qty += delta;
+  const filtered = item.qty <= 0 ? basket.filter(b => b.id !== id) : basket;
+  setBasket(filtered);
+  renderBasket();
+}
+
+function removeBasketItem(id) {
+  setBasket(getBasket().filter(b => b.id !== id));
+  renderBasket();
+}
+
+function clearBasket() {
+  if (!getBasket().length) return;
+  if (!confirm('Clear all items from your basket?')) return;
+  setBasket([]);
+  renderBasket();
+}
+
+function updateBasketBadge() {
+  const basket = getBasket();
+  const count = basket.reduce((sum,b)=>sum+b.qty, 0);
+  const badge = document.getElementById('basketBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = count > 99 ? '99+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderBasket() {
+  const cur = getSettings().currency || '₱';
+  const basket = getBasket();
+  const listEl = document.getElementById('basketList');
+  const totalEl = document.getElementById('basketTotal');
+  const countEl = document.getElementById('basketCountLabel');
+
+  const totalQty = basket.reduce((sum,b)=>sum+b.qty, 0);
+  const total = basket.reduce((sum,b)=>sum+(b.price*b.qty), 0);
+
+  totalEl.textContent = cur + formatPrice(total);
+  countEl.textContent = totalQty + (totalQty===1 ? ' item' : ' items');
+
+  if (!basket.length) {
+    listEl.innerHTML = '<div class="basket-empty">🧺 Your basket is empty.<br>Scan or browse products to add them.</div>';
+    return;
+  }
+
+  listEl.innerHTML = basket.map(b => `
+    <div class="basket-item">
+      <div style="min-width:0;flex:1">
+        <div class="bname">${escHtml(b.name)}</div>
+        <div class="bmeta">${cur}${formatPrice(b.price)} · ${escHtml(b.uom)}</div>
+      </div>
+      <div class="bqty">
+        <button onclick="changeBasketQty('${escAttr(b.id)}',-1)">−</button>
+        <span>${b.qty}</span>
+        <button onclick="changeBasketQty('${escAttr(b.id)}',1)">+</button>
+      </div>
+      <div class="bline">${cur}${formatPrice(b.price*b.qty)}</div>
+      <button class="bremove" onclick="removeBasketItem('${escAttr(b.id)}')">✕</button>
+    </div>`).join('');
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
