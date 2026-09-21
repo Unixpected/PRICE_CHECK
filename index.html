@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>PriceCheck</title>
+  <title>Price Checker</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0b0f19" />
+  <meta name="theme-color" content="#0f172a" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,404 +14,700 @@
 
   <style>
     :root {
-      --bg: #0b0f19;
-      --surface: #151d30;
-      --surface-elevated: #1e2942;
-      --border: #2a3854;
-      --border-focus: #38bdf8;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #273549;
+      --border: #334155;
       --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
       --success: #4ade80;
       --danger: #f87171;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --price-color: #fbbf24;
-      --radius-lg: 20px;
-      --radius-md: 12px;
-      --radius-sm: 8px;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --price: #fbbf24;
+      --radius: 16px;
+      --radius-sm: 10px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
-      color: var(--text-main);
+      color: var(--text);
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
     }
 
-    /* ── HEADER ── */
+    /* ── TOP NAV ── */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 18px;
-      background: rgba(21, 29, 48, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 10px 16px;
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
+      gap: 10px;
     }
-    .topbar .brand {
-      font-size: 1.15rem; font-weight: 800;
-      letter-spacing: -0.5px; color: var(--accent);
+    .topbar .logo {
+      font-size: 1.1rem; font-weight: 800;
+      letter-spacing: -0.5px; color: var(--accent); white-space: nowrap;
     }
-    .topbar .brand span { color: var(--text-main); }
+    .topbar .logo span { color: var(--text); }
 
+    /* badge */
     .status-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.72rem; padding: 5px 12px; border-radius: 30px;
-      font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
+      font-weight: 600; white-space: nowrap; flex-shrink: 0;
     }
-    .status-badge.ok  { background: rgba(74, 222, 128, 0.1); color: var(--success); border: 1px solid rgba(74, 222, 128, 0.3); }
-    .status-badge.err { background: rgba(248, 113, 113, 0.1); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.3); }
-    .status-badge.loading { background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); }
-    .status-badge .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-badge.ok  { background:#052e16; color:var(--success); border:1px solid #166534; }
+    .status-badge.err { background:#450a0a; color:var(--danger);  border:1px solid #991b1b; }
+    .status-badge.loading { background:#082f49; color:var(--accent); border:1px solid #0ea5e9; }
+    .status-badge .dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
 
-    /* ── TAB CONTENT ── */
-    .page { display: none; flex: 1; flex-direction: column; padding-bottom: 90px; }
-    .page.active { display: flex; }
-
-    /* ── SCANNER ── */
-    .scanner-viewport-container {
-      position: relative;
-      width: 100%;
-      height: 280px;
-      background: #000;
-      overflow: hidden;
-      border-bottom: 1px solid var(--border);
-    }
-    #reader { width: 100%; height: 100%; }
-    #reader * { display: none !important; }
-    #reader video { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover; }
-
-    .scanner-target-overlay {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: none; z-index: 10;
-      background: rgba(0, 0, 0, 0.25);
-    }
-    .target-box {
-      width: 240px; height: 140px; position: relative;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
-      border-radius: var(--radius-sm);
-    }
-    .corner-bracket {
-      position: absolute; width: 20px; height: 20px;
-      border-color: var(--accent); border-style: solid;
-    }
-    .cb-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
-    .cb-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-top-right-radius: 8px; }
-    .cb-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-bottom-left-radius: 8px; }
-    .cb-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
-
-    .laser-line {
-      position: absolute; left: 5%; right: 5%; height: 2px;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-      animation: laserScan 2s infinite ease-in-out;
-    }
-    @keyframes laserScan {
-      0% { top: 10%; opacity: 0; }
-      50% { opacity: 1; }
-      100% { top: 90%; opacity: 0; }
-    }
-
-    .status-text {
-      text-align: center; font-size: 0.82rem; color: var(--text-muted);
-      padding: 10px 16px 4px; font-weight: 500;
-    }
-
-    .controls-grid {
-      display: flex; gap: 8px; padding: 6px 16px;
-      justify-content: center; flex-wrap: wrap;
-    }
-
-    .btn {
-      border: none; border-radius: var(--radius-md);
-      padding: 10px 18px; font-size: 0.88rem; font-weight: 700;
-      cursor: pointer; transition: all 0.15s ease;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn-accent { background: var(--accent); color: #0b0f19; box-shadow: 0 4px 14px var(--accent-glow); }
-    .btn-secondary { background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border); }
-    .btn-full { width: 100%; }
-
-    .search-bar-wrap {
-      display: flex; gap: 8px; padding: 10px 16px;
-    }
-    .search-input {
-      flex: 1; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-md); color: var(--text-main); font-size: 0.95rem;
-      padding: 10px 14px; outline: none; transition: border-color 0.2s;
-    }
-    .search-input:focus { border-color: var(--border-focus); }
-    .search-input::placeholder { color: var(--text-muted); }
-
-    /* ── RESULT CARD ── */
-    .result-container { padding: 8px 16px; }
-    .result-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 18px; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .result-card.found { border-color: rgba(74, 222, 128, 0.4); }
-    .result-card.not-found { border-color: rgba(248, 113, 113, 0.4); }
-    .result-header { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; }
-    .result-title { font-size: 1.1rem; font-weight: 800; margin: 6px 0 10px; line-height: 1.35; }
-    .result-price-tag { font-size: 2.2rem; font-weight: 900; color: var(--price-color); letter-spacing: -0.5px; }
-    .meta-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
-    .tag {
-      background: var(--surface-elevated); border: 1px solid var(--border);
-      border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; color: var(--text-muted);
-    }
-    .tag strong { color: var(--text-main); }
-
-    /* ── BROWSE LIST ── */
-    .product-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-    .product-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-md); padding: 12px 14px;
-      display: flex; align-items: center; justify-content: space-between;
-      transition: border-color 0.15s; cursor: pointer;
-    }
-    .product-card:active { border-color: var(--accent); }
-    .p-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
-    .p-sub { font-size: 0.75rem; color: var(--text-muted); }
-    .p-price { font-size: 1.15rem; font-weight: 800; color: var(--price-color); }
-    .add-btn {
-      background: var(--accent); color: #0b0f19; border: none;
-      border-radius: var(--radius-sm); width: 32px; height: 32px;
-      font-size: 1.1rem; font-weight: 800; margin-left: 12px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-
-    /* ── BASKET PAGE ── */
-    .basket-summary-card {
-      margin: 12px 16px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 16px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .b-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
-    .b-total { font-size: 1.8rem; font-weight: 900; color: var(--price-color); }
-    .basket-items { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-    .basket-row {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-md); padding: 12px 14px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .qty-controls {
-      display: flex; align-items: center; gap: 6px;
-      background: var(--surface-elevated); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 2px 4px;
-    }
-    .qty-controls button {
-      width: 24px; height: 24px; border: none; background: transparent;
-      color: var(--text-main); font-weight: 800; cursor: pointer;
-    }
-
-    /* ── NAVIGATION TAB BAR ── */
+    /* ── BOTTOM TAB BAR ── */
     .tabbar {
-      display: flex; background: var(--surface); border-top: 1px solid var(--border);
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      display: flex; background: var(--surface);
+      border-top: 1px solid var(--border);
+      position: fixed; bottom:0; left:0; right:0; z-index:100;
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .tab-btn {
+    .tab {
       flex: 1; display: flex; flex-direction: column; align-items: center;
-      gap: 3px; padding: 10px 0 8px; border: none; background: none;
-      color: var(--text-muted); font-size: 0.68rem; font-weight: 700;
-      text-transform: uppercase; cursor: pointer; position: relative;
+      gap: 3px; padding: 10px 0 8px; cursor: pointer; color: var(--muted);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em;
+      text-transform: uppercase; transition: color 0.15s;
+      border: none; background: none;
     }
-    .tab-btn .icon { font-size: 1.25rem; }
-    .tab-btn.active { color: var(--accent); }
-    .badge-count {
-      position: absolute; top: 4px; right: calc(50% - 20px);
-      background: var(--danger); color: #fff; font-size: 0.62rem; font-weight: 800;
-      min-width: 16px; height: 16px; border-radius: 10px; display: flex;
-      align-items: center; justify-content: center; padding: 0 4px;
+    .tab .tab-icon { font-size: 1.3rem; }
+    .tab.active { color: var(--accent); }
+
+    /* ── PAGES ── */
+    .page { display:none; flex:1; flex-direction:column; padding-bottom:80px; overflow-y:auto; }
+    .page.active { display:flex; }
+    #page-scan { overflow:hidden; padding-bottom:0; }
+    #page-search { overflow-y:auto; }
+
+    /* ── SCAN PAGE ── */
+    #reader {
+      width: 100%; height: 200px; background: #000;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    /* hide html5-qrcode's own UI elements we don't want */
+    #reader * { display:none !important; }
+    #reader video { display:block !important; width:100% !important; height:100% !important; object-fit:cover; }
+
+    .scan-overlay-wrap { position: relative; width:100%; }
+    .scan-overlay-frame {
+      position: absolute; inset:0; top:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; z-index:10;
+    }
+    .scan-frame { width: 160px; height: 100px; position: relative; }
+    .scan-frame::before, .scan-frame::after,
+    .scan-frame .cbr, .scan-frame .cbl {
+      content:''; position:absolute; width:22px; height:22px;
+      border-color:var(--accent); border-style:solid;
+    }
+    .scan-frame::before { top:0; left:0;    border-width:3px 0 0 3px; }
+    .scan-frame::after  { top:0; right:0;   border-width:3px 3px 0 0; }
+    .scan-frame .cbr    { bottom:0; right:0; border-width:0 3px 3px 0; }
+    .scan-frame .cbl    { bottom:0; left:0;  border-width:0 0 3px 3px; }
+    .scan-line {
+      position:absolute; left:10%; right:10%; height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      animation:scanline 2s ease-in-out infinite; border-radius:2px;
+    }
+    @keyframes scanline {
+      0%   { top:12%; opacity:0; }
+      10%  { opacity:1; }
+      90%  { opacity:1; }
+      100% { top:88%; opacity:0; }
     }
 
-    .timestamp-bar {
-      position: fixed; bottom: calc(52px + env(safe-area-inset-bottom));
-      left: 0; right: 0; z-index: 90; text-align: center;
-      font-size: 0.72rem; color: var(--accent); font-weight: 600;
-      padding: 4px 10px; background: rgba(11, 15, 25, 0.95);
-      border-top: 1px solid var(--border); pointer-events: none;
+    .scan-status {
+      text-align:center; padding:6px 18px 4px;
+      font-size:0.8rem; color:var(--muted);
+    }
+    .scan-status.active-scan { color:var(--accent); }
+    .scan-status.scan-error  { color:var(--danger); }
+
+    .cam-controls {
+      display:flex; gap:8px; padding:4px 18px 6px;
+      justify-content:center; flex-wrap:wrap;
+    }
+    .btn {
+      border:none; border-radius:var(--radius-sm);
+      padding:10px 20px; font-size:0.9rem; font-weight:700;
+      cursor:pointer; transition:opacity 0.15s, transform 0.1s;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn:active { transform:scale(0.96); opacity:0.8; }
+    .btn-primary { background:var(--accent); color:#0f172a; }
+    .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-full    { width:100%; justify-content:center; }
+    .btn-warn    { background:#92400e; color:#fef3c7; border:1px solid #b45309; }
+
+    .search-row {
+      display:flex; gap:10px; padding:8px 18px; align-items:center;
+    }
+    .search-input {
+      flex:1; background:var(--surface2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text); font-size:1rem;
+      padding:11px 14px; outline:none; -webkit-appearance:none;
+    }
+    .search-input:focus { border-color:var(--accent); }
+    .search-input::placeholder { color:var(--muted); }
+
+    /* scan page compact overrides */
+    #page-scan .search-row { padding:4px 18px; }
+    #page-scan .search-input { padding:8px 12px; font-size:0.95rem; }
+    #page-scan .btn { padding:8px 16px; font-size:0.85rem; }
+
+    /* ── RESULT CARD ── */
+    .result-card {
+      margin:6px 18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px; animation:fadeUp 0.25s ease;
+    }
+    #page-scan .result-card { margin:4px 12px; padding:12px; }
+    #page-scan .result-name { font-size:1rem; margin-bottom:8px; }
+    #page-scan .result-price { font-size:1.8rem; }
+    #page-scan .result-meta { margin-top:8px; gap:6px; }
+    #page-scan .tag { padding:3px 8px; font-size:0.7rem; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .result-card.not-found { border-color:var(--danger); }
+    .result-card.found     { border-color:var(--success); }
+    .result-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:4px; }
+    .result-name  { font-size:1.15rem; font-weight:800; margin-bottom:12px; line-height:1.3; }
+    .result-price { font-size:2.4rem; font-weight:900; color:var(--price); letter-spacing:-1px; margin-bottom:4px; }
+    .result-price .peso { font-size:1.4rem; vertical-align:super; }
+    .result-meta  { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .tag {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; padding:4px 10px; font-size:0.75rem; color:var(--muted);
+    }
+    .tag strong { color:var(--text); }
+
+    /* ── BROWSE PAGE ── */
+    .page-title { font-size:1.2rem; font-weight:800; padding:16px 18px 8px; }
+    .product-list { padding:0 18px; display:flex; flex-direction:column; gap:8px; }
+    .product-item {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:14px; cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center;
+      transition:border-color 0.15s;
+    }
+    .product-item:active { border-color:var(--accent); }
+    .pname { font-size:0.9rem; font-weight:600; }
+    .pmeta { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+    .pprice { font-size:1.1rem; font-weight:800; color:var(--price); white-space:nowrap; padding-left:10px; }
+    .no-results { text-align:center; color:var(--muted); padding:40px 18px; font-size:0.95rem; }
+
+    /* quick add button on browse rows */
+    .badd {
+      background:var(--accent); color:#0f172a; border:none; border-radius:8px;
+      width:34px; height:34px; font-size:1.1rem; font-weight:800; margin-left:10px;
+      flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+    .badd:active { transform:scale(0.92); }
+
+    /* ── BASKET PAGE ── */
+    .basket-summary {
+      margin:6px 18px 4px; background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 18px; display:flex;
+      justify-content:space-between; align-items:center;
+    }
+    .basket-summary .btotal-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+    .basket-summary .btotal-value { font-size:1.6rem; font-weight:900; color:var(--price); letter-spacing:-0.5px; }
+    .basket-list { padding:6px 18px 10px; display:flex; flex-direction:column; gap:8px; }
+    .basket-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+      padding:12px 14px; display:flex; align-items:center; gap:10px;
+    }
+    .basket-item .bname { font-size:0.9rem; font-weight:700; line-height:1.3; }
+    .basket-item .bmeta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+    .basket-item .bline { font-size:0.95rem; font-weight:800; color:var(--price); white-space:nowrap; }
+    .bqty {
+      display:flex; align-items:center; gap:6px; background:var(--surface2);
+      border:1px solid var(--border); border-radius:8px; padding:2px;
+    }
+    .bqty button {
+      width:26px; height:26px; border:none; border-radius:6px; background:transparent;
+      color:var(--text); font-size:1rem; font-weight:800; cursor:pointer;
+    }
+    .bqty button:active { background:var(--border); }
+    .bqty span { min-width:22px; text-align:center; font-size:0.85rem; font-weight:700; }
+    .bremove {
+      background:none; border:none; color:var(--danger); font-size:1.1rem;
+      cursor:pointer; padding:4px 6px; flex-shrink:0;
+    }
+    .basket-empty { text-align:center; color:var(--muted); padding:50px 18px; font-size:0.95rem; }
+    .basket-actions { padding:4px 18px 90px; }
+
+    /* tab badge (item count) */
+    .tab { position:relative; }
+    .tab-count {
+      position:absolute; top:4px; right:calc(50% - 22px);
+      background:var(--danger); color:#fff; font-size:0.62rem; font-weight:800;
+      min-width:16px; height:16px; border-radius:9px; display:flex; align-items:center;
+      justify-content:center; padding:0 4px; line-height:1;
     }
 
+    /* ── BOTTOM TIMESTAMP ── */
+    .bottom-timestamp {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(52px + env(safe-area-inset-bottom));
+      z-index: 120;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 600;
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.97);
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    /* ── TOAST ── */
     #toast {
-      position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
-      background: var(--surface-elevated); border: 1px solid var(--border);
-      color: var(--text-main); padding: 8px 18px; border-radius: 30px;
-      font-size: 0.85rem; font-weight: 600; opacity: 0; transition: opacity 0.25s;
-      pointer-events: none; z-index: 1000;
+      position:fixed; bottom:130px; left:50%; transform:translateX(-50%);
+      background:var(--surface2); border:1px solid var(--border); color:var(--text);
+      padding:10px 20px; border-radius:30px; font-size:0.85rem; font-weight:600;
+      opacity:0; transition:opacity 0.3s; pointer-events:none;
+      white-space:nowrap; z-index:999;
     }
-    #toast.show { opacity: 1; }
+    #toast.show { opacity:1; }
   </style>
 </head>
 <body>
 
+<!-- TOP BAR -->
 <header class="topbar">
-  <div class="brand" id="brandText">Price<span>Check</span></div>
+  <div class="logo" id="logoText">Price<span>Check</span></div>
   <div id="dbStatusBadge" class="status-badge err">
-    <div class="pulse-dot"></div><span>Offline</span>
+    <div class="dot"></div><span>No Data</span>
   </div>
 </header>
 
-<!-- SCAN TAB -->
+<!-- ══ SCAN PAGE ══════════════════════════════════════════════ -->
 <div id="page-scan" class="page active">
-  <div class="scanner-viewport-container">
+  <div class="scan-overlay-wrap">
     <div id="reader"></div>
-    <div class="scanner-target-overlay">
-      <div class="target-box">
-        <div class="corner-bracket cb-tl"></div>
-        <div class="corner-bracket cb-tr"></div>
-        <div class="corner-bracket cb-bl"></div>
-        <div class="corner-bracket cb-br"></div>
-        <div class="laser-line"></div>
+    <div class="scan-overlay-frame">
+      <div class="scan-frame">
+        <div class="cbr"></div><div class="cbl"></div>
+        <div class="scan-line"></div>
       </div>
     </div>
   </div>
-  <div id="scanStatus" class="status-text">Press Start to enable camera</div>
-  
-  <div class="controls-grid">
-    <button class="btn btn-accent" id="btnStart" onclick="startScan()">📷 Start Camera</button>
-    <button class="btn btn-secondary" id="btnStop" onclick="stopScan()" style="display:none">⏹ Stop</button>
-    <button class="btn btn-secondary" id="btnFlip" onclick="flipCamera()" style="display:none">🔄 Flip</button>
-    <button class="btn btn-secondary" id="btnFlash" onclick="toggleFlash()" style="display:none">🔦 Flash</button>
+  <div id="scanStatus" class="scan-status">Press Start to activate camera</div>
+  <div class="cam-controls">
+    <button class="btn btn-primary" id="btnStart" onclick="startScan()">📷 Start Camera</button>
+    <button class="btn btn-ghost"   id="btnStop"  onclick="stopScan()"   style="display:none">⏹ Stop</button>
+    <button class="btn btn-ghost"   id="btnFlip"  onclick="flipCamera()" style="display:none">🔄 Flip</button>
+    <button class="btn btn-ghost"   id="btnFlash" onclick="toggleFlash()"  style="display:none">🔦 Flash</button>
   </div>
-
-  <div class="search-bar-wrap">
-    <input class="search-input" id="manualBarcode" type="text" inputmode="numeric"
-           placeholder="Type barcode or product name…" onkeydown="if(event.key==='Enter')manualSearch()" />
-    <button class="btn btn-secondary" onclick="manualSearch()">🔍</button>
+  <div class="search-row">
+    <input class="search-input" id="manualBarcode" type="text"
+           placeholder="Or type barcode / name…"
+           onkeydown="if(event.key==='Enter')manualSearch()" />
+    <button class="btn btn-ghost" onclick="manualSearch()">🔍</button>
   </div>
-
-  <div id="resultArea" class="result-container"></div>
+  <div id="resultArea"></div>
+  <div style="padding:4px 18px 90px;">
+    <button class="btn btn-ghost btn-full" style="padding:6px 12px;font-size:0.78rem;" onclick="loadCSV(true)">🔄 Refresh Product Data</button>
+  </div>
 </div>
 
-<!-- BROWSE TAB -->
+<!-- ══ BROWSE PAGE ════════════════════════════════════════════ -->
 <div id="page-search" class="page">
-  <div class="search-bar-wrap" style="padding-top:16px;">
-    <input class="search-input" id="browseInput" type="text" placeholder="Search catalog…" oninput="renderBrowse()" />
+  <div class="page-title">Browse Products</div>
+  <div class="search-row" style="padding-top:0">
+    <input class="search-input" id="browseInput" type="text"
+           placeholder="Search by name or barcode…" oninput="renderBrowse()" />
   </div>
   <div id="browseList" class="product-list"></div>
 </div>
 
-<!-- BASKET TAB -->
+<!-- ══ BASKET PAGE ════════════════════════════════════════════ -->
 <div id="page-basket" class="page">
-  <div class="basket-summary-card">
+  <div class="page-title">My Basket</div>
+  <div class="basket-summary">
     <div>
-      <div class="b-label">Grand Total</div>
-      <div class="b-total" id="basketTotal">₱0.00</div>
+      <div class="btotal-label">Total</div>
+      <div class="btotal-value" id="basketTotal">₱0</div>
     </div>
-    <div style="font-size:0.8rem;color:var(--text-muted)" id="basketCountLabel">0 items</div>
+    <div style="font-size:0.78rem;color:var(--muted)" id="basketCountLabel">0 items</div>
   </div>
-  <div id="basketList" class="basket-items"></div>
-  <div style="padding: 16px;">
-    <button class="btn btn-secondary btn-full" style="color:var(--danger);" onclick="clearBasket()">Clear Basket</button>
+  <div id="basketList" class="basket-list"></div>
+  <div class="basket-actions">
+    <button class="btn btn-warn btn-full" onclick="clearBasket()">🗑 Clear Basket</button>
   </div>
 </div>
 
+<!-- ══ BOTTOM TAB BAR ═════════════════════════════════════════ -->
 <nav class="tabbar">
-  <button class="tab-btn active" id="tab-scan" onclick="showTab('scan')"><span class="icon">📷</span>Scan</button>
-  <button class="tab-btn" id="tab-search" onclick="showTab('search')"><span class="icon">🔍</span>Browse</button>
-  <button class="tab-btn" id="tab-basket" onclick="showTab('basket')">
-    <span class="icon">🧺</span>Basket
-    <span class="badge-count" id="basketBadge" style="display:none">0</span>
+  <button class="tab active" id="tab-scan"     onclick="showTab('scan')">
+    <span class="tab-icon">📷</span>Scan
+  </button>
+  <button class="tab"        id="tab-search"   onclick="showTab('search')">
+    <span class="tab-icon">🔍</span>Browse
+  </button>
+  <button class="tab"        id="tab-basket"   onclick="showTab('basket')">
+    <span class="tab-icon">🧺</span>Basket
+    <span class="tab-count" id="basketBadge" style="display:none">0</span>
   </button>
 </nav>
 
-<div id="lastUpdated" class="timestamp-bar"></div>
+<div id="lastUpdated" class="bottom-timestamp"></div>
 <div id="toast"></div>
 
 <script>
-const DEFAULT = { user:'unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv', currency:'₱', storeName:'PriceCheck' };
+// ─── STORAGE ─────────────────────────────────────────────────
+const DEFAULT = {
+  user:'unixpected', repo:'PRICE_CHECK', branch:'main', path:'products.csv',
+  currency:'₱', storeName:'PriceCheck', camFacing:'environment', pin:'1234'
+};
 function getSettings() {
-  try { return { ...DEFAULT, ...JSON.parse(localStorage.getItem('pcSettings')||'{}') }; }
+  try {
+    const stored = JSON.parse(localStorage.getItem('pcSettings')||'{}');
+    return {
+      ...DEFAULT,
+      ...stored,
+      user:   stored.user   || DEFAULT.user,
+      repo:   stored.repo   || DEFAULT.repo,
+      branch: stored.branch || DEFAULT.branch,
+      path:   stored.path   || DEFAULT.path,
+    };
+  }
   catch { return { ...DEFAULT }; }
 }
+function setSettings(obj) {
+  localStorage.setItem('pcSettings', JSON.stringify({ ...getSettings(), ...obj }));
+}
 
+// ─── STATE ───────────────────────────────────────────────────
 let products = [];
-let html5Qr = null;
-let cameras = [];
-let camIdx = 0;
+let html5Qr  = null;
+let cameras  = [];
+let camIdx   = 0;
 let scanning = false;
-let flashOn = false;
-let barcodeIndex = new Map();
+let flashOn  = false;
 
+// ─── INIT ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('brandText').innerHTML = escHtml(getSettings().storeName || 'Price') + '<span>Check</span>';
-  loadCSV(false);
+  applyDisplaySettings();
+
+  const initialTs = localStorage.getItem('pcCsvTimestamp');
+  updateLastUpdated(initialTs);
+
+  const hasCache = localStorage.getItem('pcCsvCache');
+  if (hasCache) {
+    loadCachedCSV();
+    loadCSV(false);
+  } else {
+    loadCSV(false);
+  }
+
   updateBasketBadge();
 });
 
-function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'search') renderBrowse();
-  if (name === 'basket') renderBasket();
+function applyDisplaySettings() {
+  const s = getSettings();
+  document.title = s.storeName || 'PriceCheck';
+  document.getElementById('logoText').innerHTML =
+    escHtml(s.storeName||'Price') + '<span>Check</span>';
 }
 
-async function loadCSV(showFeedback = false) {
-  updateDbBadge(null);
+// ─── TABS ────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='search') renderBrowse();
+  if (name==='basket') renderBasket();
+}
+
+// ─── CSV ─────────────────────────────────────────────────────
+function buildCsvUrl(s) {
+  if (!s.user) return './products.csv';
+  return `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}`;
+}
+
+// ─── ROBUST ISO PARSER (Fixes "--" timestamp) ─────────────────
+function parseIsoTimestamp(isoStr) {
+  // Strip BOM/whitespace
+  let raw = isoStr.replace(/^\uFEFF/, '').trim();
+  if (!raw) return null;
+
+  // Simple regex extract: YYYY-MM-DDTHH:MM:SS.sssZ (handles 3-9 decimals)
+  const simpleMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?(Z)?$/i);
+  if (simpleMatch) {
+    const [,y,m,d,h,mi,s,ms] = simpleMatch;
+    let msNum = 0;
+    if (ms) {
+      const frac = ms.slice(1);
+      msNum = Math.floor(parseFloat(frac) * 1000);
+    }
+    return Date.UTC(+y, +m-1, +d, +h, +mi, +s, msNum);
+  }
+
+
+  // Full Date constructor fallback (truncates decimals automatically)
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.getTime();
+
+  // Plain numeric fallback
+  const num = Number(raw);
+  if (!isNaN(num) && num > 0) return num;
+
+  console.warn('Failed to parse timestamp:', raw);
+  return null;
+}
+
+
+async function fetchTimestampFromTxt() {
   const s = getSettings();
-  const remoteUrl = `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/${s.path}?nc=` + Date.now();
-  
+  const base = s.user
+    ? `https://raw.githubusercontent.com/${s.user}/${s.repo}/${s.branch}/`
+    : './';
+  const tsUrl = base + 'products_timestamp.txt?nc=' + Date.now();
   try {
-    const res = await fetch(remoteUrl);
+    const res = await fetch(tsUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    products = parseCSV(text);
-    updateDbBadge(true, products.length);
-    if (showFeedback) toast('Loaded ' + products.length + ' products');
+    const raw = await res.text();
+    const cleanRaw = raw.replace(/^\uFEFF/, '').trim();
+    return parseIsoTimestamp(cleanRaw);
   } catch (e) {
+    console.warn('Timestamp fetch failed:', e);
+    return null;
+  }
+}
+
+
+async function loadCSV(showFeedback=false) {
+  updateDbBadge(null);
+
+  async function tryFetch(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const headerTs = res.headers.get('last-modified');
+    const rawTs = headerTs ? new Date(headerTs).getTime() : null;
+    const total = Number(res.headers.get('content-length')) || 0;
+
+    if (res.body && res.body.getReader) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let received = 0;
+      let text = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        text += decoder.decode(value, { stream: true });
+
+        if (total > 0) {
+          const pct = Math.min(100, Math.round((received / total) * 100));
+          updateDbBadge(null, 0, 'Loading ' + pct + '%');
+        } else {
+          const kb = Math.round(received / 1024);
+          updateDbBadge(null, 0, 'Loading ' + kb + ' KB');
+        }
+      }
+
+      text += decoder.decode();
+      return { text, rawTs };
+    }
+
+    const text = await res.text();
+    return { text, rawTs };
+  }
+
+  let text = null;
+  let rawTs = null;
+  let source = '';
+
+  try {
+    const remote = buildCsvUrl(getSettings()) + '?nc='+Date.now();
+    const result = await tryFetch(remote);
+    text = result.text;
+    rawTs = result.rawTs;
+    source = 'remote';
+  } catch(e) {
+    console.warn('Remote CSV failed:', e.message);
+  }
+
+  if (!text) {
+    try {
+      const result = await tryFetch('./products.csv');
+      text = result.text;
+      rawTs = result.rawTs;
+      source = 'local';
+    } catch(e) {
+      console.warn('Local CSV failed:', e.message);
+    }
+  }
+
+  if (text) {
+    products = parseCSV(text);
+    
+    // Cache only if small enough (avoid quota exceeded)
+    try {
+      localStorage.setItem('pcCsvCache', text);
+    } catch(e) {
+      console.warn('Cache quota exceeded - using online-only mode:', e);
+    }
+
+    // Prefer the timestamp from the dedicated TXT file (most accurate)
+    let txtTs = null;
+    try { txtTs = await fetchTimestampFromTxt(); } catch(_) {}
+
+    const finalTsStr = txtTs ? new Date(txtTs).toISOString() : (rawTs ? new Date(rawTs).toISOString() : null);
+    if (finalTsStr) {
+      try {
+        localStorage.setItem('pcCsvTimestamp', finalTsStr);
+      } catch(e) {
+        console.warn('Timestamp cache failed:', e);
+      }
+    }
+
+    updateDbBadge(true, products.length);
+    updateLastUpdated(finalTsStr);
+
+    if (showFeedback) toast('✅ Loaded '+products.length+' products'+(source==='local'?' (local)':''));
+    return;
+  }
+
+
+  const cachedTs = localStorage.getItem('pcCsvTimestamp');
+  if (products.length === 0) {
     const cached = localStorage.getItem('pcCsvCache');
     if (cached) {
       products = parseCSV(cached);
       updateDbBadge(true, products.length);
-      if (showFeedback) toast('Using offline cache');
+      updateLastUpdated(cachedTs);
+      if (showFeedback) toast('⚠️ Using offline data');
+
     } else {
       updateDbBadge(false, 0);
+      updateLastUpdated(null);
+      if (showFeedback) toast('❌ Could not load CSV');
     }
+  } else {
+    updateDbBadge(true, products.length);
+    updateLastUpdated(cachedTs);
+    if (showFeedback) toast('⚠️ Using offline data');
   }
 }
+
+function loadCachedCSV() {
+  const cached = localStorage.getItem('pcCsvCache');
+  const ts = localStorage.getItem('pcCsvTimestamp');
+  if (cached) {
+    products = parseCSV(cached);
+    updateDbBadge(true, products.length);
+    updateLastUpdated(ts);
+  } else {
+    updateDbBadge(false, 0);
+    updateLastUpdated(null);
+  }
+}
+
+function updateLastUpdated(tsStr) {
+  const el = document.getElementById('lastUpdated');
+  if (!tsStr) {
+    el.textContent = '📅 Last updated: —';
+    return;
+  }
+
+  // Parse timestamp (robust)
+  const ts = parseIsoTimestamp(tsStr);
+  if (!ts || isNaN(ts)) {
+    console.warn('Invalid timestamp:', tsStr);
+    el.textContent = '📅 Last updated: —';
+    return;
+  }
+
+  // Format for PH locale
+  const d = new Date(ts);
+  el.textContent = '📅 Last updated: ' + d.toLocaleString('en-PH', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
+}
+
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
   const delim = lines[0].includes('\t') ? '\t' : ',';
+
+  // Parse header — strip BOM and quotes
   const headers = lines[0].split(delim).map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, '').toLowerCase());
 
   const parsed = [];
   for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const cols = lines[i].split(delim);
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const cols = splitCSVLine(line, delim);
     const obj = {};
-    headers.forEach((h, idx) => obj[h] = (cols[idx] || '').trim());
+    headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
     if (obj.citem) parsed.push(obj);
   }
   buildBarcodeIndex(parsed);
   return parsed;
 }
 
+// ─── BARCODE INDEX ───────────────────────────────────────────
+// Pre-built map of every normalized barcode form → product
+// so scanned codes are resolved in O(1) with no per-scan loops.
+let barcodeIndex = new Map();
+
 function buildBarcodeIndex(prods) {
-  barcodeIndex.clear();
+  barcodeIndex = new Map();
   for (const p of prods) {
     const cupc = String(p.cupc || '').trim();
-    const sku = String(p.sku || '').trim().replace(/\.00$/, '');
+    const sku  = String(p.sku  || '').trim().replace(/\.00$/, '');
+
+    // Index by the raw cupc as stored in CSV
     if (cupc && cupc !== '0') indexAdd(cupc, p);
+
+    // Index by SKU (fallback for items whose barcode encodes the internal SKU)
     if (sku) indexAdd(sku, p);
-    if (cupc.length <= 12) indexAdd(cupc.padStart(13, '0'), p);
+
+    // Derived forms so a scanned code always resolves regardless of encoding:
+    if (cupc.length === 7 || cupc.length <= 12) {
+      // Short internal codes: a scanner may output them zero-padded to 13.
+      // Index the zero-padded 13-digit form too.
+      const padded = cupc.padStart(13, '0');
+      indexAdd(padded, p);
+    }
+    if (cupc.length === 14) {
+      if (cupc[0] === '1') {
+        // ITF-14 / GS1-14: leading '1' is an indicator digit.
+        // Scanners often output the inner 13 digits.
+        indexAdd(cupc.slice(1), p);   // strip first digit → 13
+      } else {
+        // Other 14-digit: drop check/trailing digit → 13
+        indexAdd(cupc.slice(0, -1), p);
+      }
+    }
   }
 }
 
@@ -419,92 +715,422 @@ function indexAdd(key, product) {
   if (!barcodeIndex.has(key)) barcodeIndex.set(key, product);
 }
 
+// ─── BARCODE NORMALIZATION ───────────────────────────────────
+// Given a raw scanned code, return all candidate lookup keys in priority order.
+function normalizeScanned(code) {
+  const candidates = [code]; // always try exact first
+
+  if (code.length === 13) {
+    // Leading-zero-padded short code: strip leading zeros
+    // e.g. "0000004171560" → "4171560"
+    const stripped = code.replace(/^0+/, '') || '0';
+    if (stripped !== code) candidates.push(stripped);
+  }
+
+  if (code.length === 14) {
+    if (code[0] === '1') {
+      // ITF-14 with indicator digit: try inner 13
+      candidates.push(code.slice(1));
+    } else {
+      // Other 14-digit: try without last digit
+      candidates.push(code.slice(0, -1));
+    }
+  }
+
+  return candidates;
+}
+
+// Proper CSV parser that handles quoted fields
+function splitCSVLine(line, delim) {
+  const cols = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === delim && !inQuote) {
+      cols.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function updateDbBadge(ok, count, loadingText='Loading…') {
+  const el = document.getElementById('dbStatusBadge');
+  if (ok===null) { el.className='status-badge loading'; el.innerHTML='<div class="dot"></div>'+escHtml(loadingText); }
+  else if (ok)   { el.className='status-badge ok';      el.innerHTML='<div class="dot"></div>'+count+' items'; }
+  else           { el.className='status-badge err';     el.innerHTML='<div class="dot"></div>No Data'; }
+}
+
+// ─── SCANNER (html5-qrcode — works on Android Chrome) ────────
+// Adaptive qrbox: a fixed pixel size (like 300x200) throws a runtime error
+// on many phones once it gets close to (or exceeds) the actual video frame
+// size. Sizing it relative to the live viewfinder avoids that entirely.
+function adaptiveQrbox(viewfinderWidth, viewfinderHeight) {
+  const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+  const size = Math.floor(minEdge * 0.75);
+  return { width: size, height: Math.floor(size * 0.62) };
+}
+
+async function primeCameraPermission(facing) {
+  // Ask for whichever camera we can get — some devices don't have a
+  // camera matching the requested facingMode and getUserMedia throws
+  // OverconstrainedError instead of just falling back.
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing } } });
+    stream.getTracks().forEach(t=>t.stop());
+  } catch(e) {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(t=>t.stop());
+  }
+}
+
 async function startScan() {
   if (scanning) return;
+  setScanStatus('Requesting camera…', 'active-scan');
   try {
+    const facing = getSettings().camFacing || 'environment';
+    await primeCameraPermission(facing);
+
     cameras = await Html5Qrcode.getCameras();
-    if (!cameras.length) throw new Error('No camera found');
+    if (!cameras || cameras.length===0) throw new Error('No camera found on this device');
+
+    camIdx = cameras.findIndex(c=>c.label.toLowerCase().includes(
+      facing==='environment' ? 'back' : 'front'
+    ));
+    if (camIdx < 0) camIdx = facing==='environment' ? cameras.length-1 : 0;
+
     html5Qr = new Html5Qrcode('reader');
     await html5Qr.start(
-      cameras[0].id,
-      { fps: 20, qrbox: { width: 240, height: 140 }, aspectRatio: 1.0 },
+      cameras[camIdx].id,
+      { fps: 12, qrbox: adaptiveQrbox },
       (decoded) => handleBarcode(decoded),
-      () => {}
+      (_err) => { /* ignore per-frame decode fails */ }
     );
+
     scanning = true;
+    flashOn = false;
+    setScanStatus('Scanning — point at barcode', 'active-scan');
     document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('btnStop').style.display = '';
+    document.getElementById('btnStop').style.display  = '';
     if (cameras.length > 1) document.getElementById('btnFlip').style.display = '';
-  } catch (e) {
-    toast('Camera Error: ' + e.message);
+    if (hasTorch()) document.getElementById('btnFlash').style.display = '';
+
+  } catch(e) {
+    setScanStatus('Camera error: '+e.message, 'scan-error');
+    toast('❌ '+e.message);
   }
 }
 
 async function stopScan() {
   if (html5Qr && scanning) {
-    await html5Qr.stop();
-    html5Qr.clear();
+    try { await html5Qr.stop(); html5Qr.clear(); } catch(_) {}
+    html5Qr = null;
   }
   scanning = false;
+  flashOn = false;
+  setScanStatus('Camera stopped');
   document.getElementById('btnStart').style.display = '';
-  document.getElementById('btnStop').style.display = 'none';
-  document.getElementById('btnFlip').style.display = 'none';
+  document.getElementById('btnStop').style.display  = 'none';
+  document.getElementById('btnFlip').style.display  = 'none';
+  document.getElementById('btnFlash').style.display = 'none';
 }
 
+function hasTorch() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return false;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return false;
+    const caps = track.getCapabilities();
+    return !!(caps && caps.torch);
+  } catch(e) { return false; }
+}
+
+async function toggleFlash() {
+  try {
+    const vid = document.querySelector('#reader video');
+    if (!vid || !vid.srcObject) return;
+    const track = vid.srcObject.getVideoTracks()[0];
+    if (!track) return;
+    flashOn = !flashOn;
+    await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+    toast(flashOn ? '🔦 Flash on' : '🔦 Flash off');
+  } catch(e) {
+    toast('❌ Flash not supported on this device');
+  }
+}
+
+async function flipCamera() {
+  if (!cameras.length || !html5Qr || !scanning) return;
+  camIdx = (camIdx+1) % cameras.length;
+  try {
+    await html5Qr.stop();
+    await html5Qr.start(
+      cameras[camIdx].id,
+      { fps: 12, qrbox: adaptiveQrbox },
+      (decoded) => handleBarcode(decoded),
+      () => {}
+    );
+    toast('📷 '+(cameras[camIdx].label||'Camera '+(camIdx+1)));
+  } catch(e) { toast('❌ Flip failed: '+e.message); }
+}
+
+function setScanStatus(msg, cls='') {
+  const el = document.getElementById('scanStatus');
+  el.textContent = msg;
+  el.className   = 'scan-status '+cls;
+}
+
+// ─── LOOKUP ──────────────────────────────────────────────────
+let lastBarcode='';
+let scanCooldown = false;
+
 function handleBarcode(code) {
+  // Accept 13-digit (EAN-13) and 14-digit (ITF-14/GS1-14) numeric barcodes.
+  // Shorter codes are handled by manual search only.
+  if (!/^\d{13,14}$/.test(code)) return;
+  if (code === lastBarcode || scanCooldown) return;
+  lastBarcode = code;
+  scanCooldown = true;
+  setTimeout(() => { lastBarcode = ''; scanCooldown = false; }, 2000);
+  navigator.vibrate && navigator.vibrate([60]);
+  setScanStatus('Scanned: ' + code, 'active-scan');
   showResult(code, true);
 }
 
 function manualSearch() {
   const q = document.getElementById('manualBarcode').value.trim();
-  if (q) showResult(q, false);
+  if (!q) return;
+  showResult(q, false);
 }
 
 function showResult(query, fromScan) {
   const cur = getSettings().currency || '₱';
-  const el = document.getElementById('resultArea');
-  let hit = barcodeIndex.get(query);
+  const el  = document.getElementById('resultArea');
+  let hit   = null;
 
-  if (!hit) {
-    const q = query.toLowerCase();
-    hit = products.find(p => (p.citem || '').toLowerCase().includes(q));
+  if (fromScan) {
+    // SCAN path: use pre-built index with normalization
+    const candidates = normalizeScanned(query);
+    for (const key of candidates) {
+      hit = barcodeIndex.get(key);
+      if (hit) break;
+    }
+  } else {
+    // MANUAL path: flexible — barcode index, SKU, name, POS name
+    const q = query.toLowerCase().replace(/\.00$/, '');
+    // Try barcode index first (exact)
+    hit = barcodeIndex.get(query);
+    if (!hit) {
+      // Then text search across name/pos
+      hit = products.find(p => {
+        const name = (p.citem || '').toLowerCase();
+        const pos  = (p.pos18 || '').toLowerCase();
+        const sku  = String(p.sku || '').trim().replace(/\.00$/, '');
+        return sku === q || name.includes(q) || pos.includes(q);
+      });
+    }
   }
 
   if (!hit) {
-    el.innerHTML = `
+    el.innerHTML=`
       <div class="result-card not-found">
-        <div class="result-header">Product Not Found</div>
-        <div class="result-title">"${escHtml(query)}"</div>
+        <div class="result-label">❌ Not Found</div>
+        <div class="result-name" style="color:var(--danger)">"${escHtml(query)}"</div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:6px">
+          No product matched this barcode or name.</div>
       </div>`;
     return;
   }
 
-  const price = parseFloat(hit.mprice) || 0;
-  el.innerHTML = `
+  const price = parsePrice(hit.mprice);
+  const sku   = String(hit.sku||'').replace(/\.00$/,'');
+  const pid   = hit.cupc && hit.cupc!=='0' ? hit.cupc : sku;
+  el.innerHTML=`
     <div class="result-card found">
-      <div class="result-header">Item Details</div>
-      <div class="result-title">${escHtml(hit.citem)}</div>
-      <div class="result-price-tag">${cur}${price.toFixed(2)}</div>
-      <div class="meta-tags">
-        <div class="tag">SKU: <strong>${escHtml(hit.sku || 'N/A')}</strong></div>
-        <div class="tag">Unit: <strong>${escHtml(hit.cuom || 'PC')}</strong></div>
+      <div class="result-label">✅ Product Found</div>
+      <div class="result-name">${escHtml(hit.citem)}</div>
+      <div class="result-price"><span class="peso">${cur}</span>${formatPrice(price)}</div>
+      <div class="result-meta">
+        ${hit.cupc&&hit.cupc!=='0'?`<div class="tag">Barcode: <strong>${escHtml(hit.cupc)}</strong></div>`:''}
+        <div class="tag">SKU: <strong>${escHtml(sku)}</strong></div>
+        <div class="tag">Unit: <strong>${escHtml(hit.cuom)}</strong></div>
+        ${hit.pos18?`<div class="tag">POS: <strong>${escHtml(hit.pos18)}</strong></div>`:''}
       </div>
-      <button class="btn btn-accent btn-full" onclick="addToBasket('${escAttr(hit.cupc || hit.sku)}')">🧺 Add to Basket</button>
+      <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="addToBasket('${escAttr(pid)}')">🧺 Add to Basket</button>
     </div>`;
 }
 
-function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function escAttr(s) { return String(s).replace(/'/g, "\\'"); }
-function updateDbBadge(ok, count) {
-  const el = document.getElementById('dbStatusBadge');
-  el.className = 'status-badge ' + (ok ? 'ok' : 'err');
-  el.innerHTML = `<div class="pulse-dot"></div><span>${ok ? count + ' Items' : 'Offline'}</span>`;
+// ─── BROWSE ──────────────────────────────────────────────────
+function renderBrowse() {
+  const q   = (document.getElementById('browseInput').value||'').toLowerCase();
+  const cur = getSettings().currency||'₱';
+  const filtered = products.filter(p=>
+    !q || p.citem.toLowerCase().includes(q) ||
+    String(p.cupc).includes(q) ||
+    String(p.sku).replace(/\.00$/,'').includes(q) ||
+    (p.pos18&&p.pos18.toLowerCase().includes(q))
+  ).slice(0,100);
+
+  const el = document.getElementById('browseList');
+  if (!filtered.length) { el.innerHTML='<div class="no-results">No products found</div>'; return; }
+  el.innerHTML = filtered.map(p => {
+    const sku = String(p.sku||'').replace(/\.00$/,'');
+    const id  = p.cupc && p.cupc!=='0' ? p.cupc : sku;
+    return `
+    <div class="product-item" onclick="selectProduct('${escAttr(id)}')">
+      <div style="min-width:0;flex:1">
+        <div class="pname">${escHtml(p.citem)}</div>
+        <div class="pmeta">${p.cupc&&p.cupc!=='0'?'BC:'+p.cupc+' · ':''}SKU:${sku} · ${p.cuom}</div>
+      </div>
+      <div class="pprice">${cur}${formatPrice(parsePrice(p.mprice))}</div>
+      <button class="badd" onclick="event.stopPropagation();addToBasket('${escAttr(id)}')">+</button>
+    </div>`;
+  }).join('');
 }
 
+function selectProduct(code) {
+  showTab('scan');
+  document.getElementById('manualBarcode').value = code;
+  showResult(code, false);
+}
+
+// ─── BASKET ──────────────────────────────────────────────────
+function getBasket() {
+  try { return JSON.parse(localStorage.getItem('pcBasket')||'[]'); }
+  catch { return []; }
+}
+function setBasket(arr) {
+  localStorage.setItem('pcBasket', JSON.stringify(arr));
+  updateBasketBadge();
+}
+
+function findProductById(id) {
+  return products.find(p => {
+    const sku = String(p.sku||'').trim().replace(/\.00$/,'');
+    const pid = p.cupc && p.cupc!=='0' ? p.cupc : sku;
+    return pid === id;
+  });
+}
+
+function addToBasket(id) {
+  const p = findProductById(id);
+  if (!p) { toast('❌ Product not found'); return; }
+  const basket = getBasket();
+  const existing = basket.find(b => b.id === id);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    basket.push({
+      id,
+      name: p.citem,
+      price: parsePrice(p.mprice),
+      uom: p.cuom||'',
+      qty: 1
+    });
+  }
+  setBasket(basket);
+  toast('🧺 Added: '+p.citem);
+  if (document.getElementById('page-basket').classList.contains('active')) renderBasket();
+}
+
+function changeBasketQty(id, delta) {
+  const basket = getBasket();
+  const item = basket.find(b => b.id === id);
+  if (!item) return;
+  item.qty += delta;
+  const filtered = item.qty <= 0 ? basket.filter(b => b.id !== id) : basket;
+  setBasket(filtered);
+  renderBasket();
+}
+
+function removeBasketItem(id) {
+  setBasket(getBasket().filter(b => b.id !== id));
+  renderBasket();
+}
+
+function clearBasket() {
+  if (!getBasket().length) return;
+  if (!confirm('Clear all items from your basket?')) return;
+  setBasket([]);
+  renderBasket();
+}
+
+function updateBasketBadge() {
+  const basket = getBasket();
+  const count = basket.reduce((sum,b)=>sum+b.qty, 0);
+  const badge = document.getElementById('basketBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = count > 99 ? '99+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderBasket() {
+  const cur = getSettings().currency || '₱';
+  const basket = getBasket();
+  const listEl = document.getElementById('basketList');
+  const totalEl = document.getElementById('basketTotal');
+  const countEl = document.getElementById('basketCountLabel');
+
+  const totalQty = basket.reduce((sum,b)=>sum+b.qty, 0);
+  const total = basket.reduce((sum,b)=>sum+(b.price*b.qty), 0);
+
+  totalEl.textContent = cur + formatPrice(total);
+  countEl.textContent = totalQty + (totalQty===1 ? ' item' : ' items');
+
+  if (!basket.length) {
+    listEl.innerHTML = '<div class="basket-empty">🧺 Your basket is empty.<br>Scan or browse products to add them.</div>';
+    return;
+  }
+
+  listEl.innerHTML = basket.map(b => `
+    <div class="basket-item">
+      <div style="min-width:0;flex:1">
+        <div class="bname">${escHtml(b.name)}</div>
+        <div class="bmeta">${cur}${formatPrice(b.price)} · ${escHtml(b.uom)}</div>
+      </div>
+      <div class="bqty">
+        <button onclick="changeBasketQty('${escAttr(b.id)}',-1)">−</button>
+        <span>${b.qty}</span>
+        <button onclick="changeBasketQty('${escAttr(b.id)}',1)">+</button>
+      </div>
+      <div class="bline">${cur}${formatPrice(b.price*b.qty)}</div>
+      <button class="bremove" onclick="removeBasketItem('${escAttr(b.id)}')">✕</button>
+    </div>`).join('');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
+function parsePrice(raw) {
+  if (raw === null || raw === undefined) return 0;
+  // Strip anything that isn't a digit, a minus sign, or a decimal point
+  // (currency symbols like ₱/$, thousands commas, stray spaces, etc.)
+  const cleaned = String(raw).replace(/[^\d.\-]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+function formatPrice(n) {
+  return Number.isInteger(n) ? n.toLocaleString(undefined, {maximumFractionDigits:0}) : n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+let toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
 }
 </script>
 </body>
